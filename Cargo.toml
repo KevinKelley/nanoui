@@ -1,0 +1,26 @@
+[package]
+
+name = "nanoui"
+version = "0.0.1"
+authors = ["Kevin Kelley <kevin@kelleysoft.com>"]
+
+
+[dependencies.nanovg]
+#path = "../nanovg-rs"
+git = "https://github.com/KevinKelley/nanovg-rs"
+
+[dependencies.glfw]
+#path = "../glfw-rs"
+git = "https://github.com/bjz/glfw-rs"
+
+[dependencies.gl]
+git = "https://github.com/bjz/gl-rs"
+
+
+[lib]
+name = "nanoui"
+path = "src/lib.rs"
+
+[[bin]]
+name = "demo"
+path = "src/demo.rs"
