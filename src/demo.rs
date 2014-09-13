@@ -11,20 +11,21 @@ extern crate glfw;
 extern crate gl;
 
 extern crate nanovg;
+extern crate nanoui;
 
 use glfw::Context;
 use std::gc::{Gc,GC};
 use std::cell::Cell;
 
 use nanovg::{Ctx, ANTIALIAS,STENCIL_STROKES};
-use blendish::ThemedContext;
-use oui::Context as UIContext;
+use nanoui::blendish::theme::ThemedContext;
+use nanoui::oui::Context as UIContext;
 
 use resources::Resources;
 use ui::Widget;
 
-mod blendish;
-mod oui;
+//mod blendish;
+//mod oui;
 mod ui;
 mod resources;
 
@@ -113,9 +114,8 @@ impl<'a> App<'a> {
         ui::update(&mut self.ui, self.mouse, self.button, self.elapsed_time as f32);
     }
 
-    fn render(&mut self, w:i32, h:i32) {
+    fn render(&mut self, w:i32, h:i32, pxRatio: f32) {
         let (w,  h) = (w as f32, h as f32);
-        let pxRatio = 1.0;
 
         self.nvg().begin_frame(w as i32, h as i32, pxRatio);
 
@@ -123,17 +123,6 @@ impl<'a> App<'a> {
 
         self.nvg().end_frame();
     }
-
-//    // capture events, for forwarding to ui in its update cycle
-//    fn mouse_press(&mut self, _window: &mut W, _args: &MousePressArgs) {
-//        self.button = true;
-//    }
-//    fn mouse_release(&mut self, _window: &mut W, _args: &MouseReleaseArgs) {
-//        self.button = false;
-//    }
-//    fn mouse_move(&mut self, _window: &mut W, args: &MouseMoveArgs) {
-//        self.mouse = (args.x as i32, args.y as i32);
-//    }
 }
 
 
@@ -155,7 +144,6 @@ fn main() {
         .expect("Failed to create GLFW window.");
 
     window.set_sticky_keys(true);
-    //window.set_key_polling(true);
     window.set_all_polling(true);
     window.make_current();
 
@@ -172,30 +160,41 @@ fn main() {
 
     while !window.should_close()
     {
+        // get current timestamp and delta
         let t: f64 = glfw.get_time();
         let dt: f64 = t - prevt;
         prevt = t;
 
+        // process outstanding window events
         glfw.poll_events();
         for (_, event) in glfw::flush_messages(&events) {
             handle_window_event(&window, &mut app, (t, event));
         }
 
-        let (mx, my) = window.get_cursor_pos(); // (f64,f64)
+        let (mousex, mousey) = window.get_cursor_pos(); // (f64,f64)
         let (winWidth, winHeight) = window.get_size();  // (i32,i32)
         let (fbWidth, fbHeight) = window.get_framebuffer_size();
         // Calculate pixel ration for hi-dpi devices.
         let pxRatio = fbWidth as f32 / winWidth as f32;
 
-
-        // Update and render
+        // clear framebuffer
         glcheck!(gl::Viewport(0, 0, fbWidth, fbHeight));
         glcheck!(gl::ClearColor(0.0, 0.0, 0.0, 0.0));
         glcheck!(gl::Clear(gl::COLOR_BUFFER_BIT|gl::DEPTH_BUFFER_BIT|gl::STENCIL_BUFFER_BIT));
 
-        app.update(dt);
-        app.render(winWidth, winHeight);
+        // shrug
+        glcheck!(gl::Enable(gl::BLEND));
+        glcheck!(gl::BlendFunc(gl::SRC_ALPHA, gl::ONE_MINUS_SRC_ALPHA));
+        glcheck!(gl::Enable(gl::CULL_FACE));
+        glcheck!(gl::Disable(gl::DEPTH_TEST));
 
+        // Update ui, and render to framebuffer
+        app.update(dt);
+        app.render(winWidth, winHeight, pxRatio);
+
+        glcheck!(gl::Enable(gl::DEPTH_TEST));
+
+        // swap in the freshened buffer
         window.swap_buffers();
     }
 }
@@ -207,25 +206,13 @@ fn handle_window_event(
     (time, event): (f64, glfw::WindowEvent)
 ) {
     match event {
-        glfw::KeyEvent(glfw::KeyEscape, _, glfw::Press, _) => {
-            window.set_should_close(true)
-        }
-        glfw::MouseButtonEvent(btn, action, mods) => {
-            match action {
-                glfw::Press => app.button = true,
-                glfw::Repeat => app.button = true,
-                glfw::Release => app.button = false,
-            }
-            println!("Time: {}, Button: {}, Action: {}, Modifiers: [{}]",
-                time, glfw::ShowAliases(btn), action, mods)
-        }
-        glfw::CursorPosEvent(xpos, ypos)    => {
-            app.mouse = (xpos as i32, ypos as i32);
-            window.set_title(format!("Time: {}, Cursor position: ({}, {})",
-                time, xpos, ypos).as_slice())
-        }
-        glfw::PosEvent(x, y)                => window.set_title(format!("Time: {}, Window pos: ({}, {})", time, x, y).as_slice()),
-        glfw::SizeEvent(w, h)               => window.set_title(format!("Time: {}, Window size: ({}, {})", time, w, h).as_slice()),
+        glfw::KeyEvent(glfw::KeyEscape, _, glfw::Press, _) => window.set_should_close(true),
+        glfw::MouseButtonEvent(_, glfw::Press, _) => app.button = true,
+        glfw::MouseButtonEvent(_, glfw::Release, _) => app.button = false,
+        glfw::CursorPosEvent(xpos, ypos)    => app.mouse = (xpos as i32, ypos as i32),
+
+        glfw::PosEvent(x, y)                => println!("Time: {}, Window pos: ({}, {})", time, x, y),
+        glfw::SizeEvent(w, h)               => println!("Time: {}, Window size: ({}, {})", time, w, h),
         glfw::CloseEvent                    => println!("Time: {}, Window close requested.", time),
         glfw::RefreshEvent                  => println!("Time: {}, Window refresh callback triggered.", time),
         glfw::FocusEvent(true)              => println!("Time: {}, Window focus gained.", time),
@@ -234,13 +221,13 @@ fn handle_window_event(
         glfw::IconifyEvent(false)           => println!("Time: {}, Window was maximised.", time),
         glfw::FramebufferSizeEvent(w, h)    => println!("Time: {}, Framebuffer size: ({}, {})", time, w, h),
         glfw::CharEvent(character)          => println!("Time: {}, Character: {}", time, character),
-        //glfw::MouseButtonEvent(btn, action, mods) => println!("Time: {}, Button: {}, Action: {}, Modifiers: [{}]", time, glfw::ShowAliases(btn), action, mods),
+        glfw::MouseButtonEvent(btn, action, mods) => println!("Time: {}, Button: {}, Action: {}, Modifiers: [{}]", time, glfw::ShowAliases(btn), action, mods),
         //glfw::CursorPosEvent(xpos, ypos)    => window.set_title(format!("Time: {}, Cursor position: ({}, {})", time, xpos, ypos).as_slice()),
         glfw::CursorEnterEvent(true)        => println!("Time: {}, Cursor entered window.", time),
         glfw::CursorEnterEvent(false)       => println!("Time: {}, Cursor left window.", time),
         glfw::ScrollEvent(x, y)             => window.set_title(format!("Time: {}, Scroll offset: ({}, {})", time, x, y).as_slice()),
         glfw::KeyEvent(key, scancode, action, mods) => {
-            println!("Time: {}, Key: {}, ScanCode: {}, Action: {}, Modifiers: [{}]", time, key, scancode, action, mods);
+            //println!("Time: {}, Key: {}, ScanCode: {}, Action: {}, Modifiers: [{}]", time, key, scancode, action, mods);
             match (key, action) {
                 (glfw::KeyEscape, glfw::Press) => window.set_should_close(true),
                 (glfw::KeyR, glfw::Press) => {
@@ -252,33 +239,5 @@ fn handle_window_event(
                 _ => {}
             }
         }
-
     }
 }
-
-// while !shouldClose {
-//     double mx, my;
-//     int winWidth, winHeight;
-//     int fbWidth, fbHeight;
-//     float pxRatio;
-//
-//     glfwGetCursorPos(window, &mx, &my);
-//     glfwGetWindowSize(window, &winWidth, &winHeight);
-//     glfwGetFramebufferSize(window, &fbWidth, &fbHeight);
-//     // Calculate pixel ration for hi-dpi devices.
-//     pxRatio = (float)fbWidth / (float)winWidth;
-//
-//     // Update and render
-//     glViewport(0, 0, fbWidth, fbHeight);
-//     glClearColor(0,0,0,1);
-//     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
-//
-//     nvgBeginFrame(vg, winWidth, winHeight, pxRatio);
-//
-//     draw(vg, winWidth, winHeight);
-//
-//     nvgEndFrame(vg);
-//
-//     glfwSwapBuffers(window);
-//     glfwPollEvents();
-// }

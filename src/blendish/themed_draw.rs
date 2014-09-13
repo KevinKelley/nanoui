@@ -10,17 +10,17 @@ pub trait ThemedDraw
     fn draw_background(&mut self, x:f32,y:f32, w:f32,h:f32);
     fn draw_bevel(&mut self, x:f32,y:f32, w:f32,h:f32);
     fn draw_label(&mut self, x:f32,y:f32, w:f32,h:f32, iconid: u32, label: &str);
-    fn draw_tool_button(&mut self, x:f32,y:f32, w:f32,h:f32, flags: CornerFlags, state: WidgetState, iconid: u32, label: &str);
-    fn draw_radio_button(&mut self, x:f32,y:f32, w:f32,h:f32, flags: CornerFlags, state: WidgetState, iconid: u32, label: &str);
-    fn draw_text_field(&mut self, x:f32,y:f32, w:f32,h:f32, flags: CornerFlags, state: WidgetState, iconid: u32, text: &str, cbegin: uint, cend: uint);
-    fn draw_option_button(&mut self, x:f32,y:f32, w:f32,h:f32, state: WidgetState, label: &str);
-    fn draw_choice_button(&mut self, x:f32,y:f32, w:f32,h:f32, flags: CornerFlags, state: WidgetState, iconid: u32, label: &str);
-    fn draw_number_field(&mut self, x:f32,y:f32, w:f32,h:f32, flags: CornerFlags, state: WidgetState, label: &str, value: &str);
-    fn draw_slider(&mut self, x:f32,y:f32, w:f32,h:f32, flags: CornerFlags, state: WidgetState, progress: f32, label: &str, value: &str);
-    fn draw_scrollbar(&mut self, x:f32,y:f32, w:f32,h:f32, state: WidgetState, offset: f32, size: f32);
+    fn draw_tool_button(&mut self, x:f32,y:f32, w:f32,h:f32, flags: CornerFlags, state: ItemState, iconid: u32, label: &str);
+    fn draw_radio_button(&mut self, x:f32,y:f32, w:f32,h:f32, flags: CornerFlags, state: ItemState, iconid: u32, label: &str);
+    fn draw_text_field(&mut self, x:f32,y:f32, w:f32,h:f32, flags: CornerFlags, state: ItemState, iconid: u32, text: &str, cbegin: uint, cend: uint);
+    fn draw_option_button(&mut self, x:f32,y:f32, w:f32,h:f32, state: ItemState, label: &str);
+    fn draw_choice_button(&mut self, x:f32,y:f32, w:f32,h:f32, flags: CornerFlags, state: ItemState, iconid: u32, label: &str);
+    fn draw_number_field(&mut self, x:f32,y:f32, w:f32,h:f32, flags: CornerFlags, state: ItemState, label: &str, value: &str);
+    fn draw_slider(&mut self, x:f32,y:f32, w:f32,h:f32, flags: CornerFlags, state: ItemState, progress: f32, label: &str, value: &str);
+    fn draw_scrollbar(&mut self, x:f32,y:f32, w:f32,h:f32, state: ItemState, offset: f32, size: f32);
     fn draw_menu_background(&mut self, x:f32,y:f32, w:f32,h:f32, flags: CornerFlags);
     fn draw_menu_label(&mut self, x:f32,y:f32, w:f32,h:f32, iconid: u32, label: &str);
-    fn draw_menu_item(&mut self, x:f32,y:f32, w:f32,h:f32, state: &mut WidgetState, iconid: u32, label: &str);
+    fn draw_menu_item(&mut self, x:f32,y:f32, w:f32,h:f32, state: &mut ItemState, iconid: u32, label: &str);
     fn draw_tooltip_background(&mut self, x:f32,y:f32, w:f32,h:f32);
 }
 
@@ -69,7 +69,7 @@ impl<'a> ThemedDraw for ThemedContext<'a>
     // if label is not NULL, a label will be added to the widget
     // widget looks best when height is WIDGET_HEIGHT
     fn draw_tool_button(&mut self,
-        x:f32,y:f32, w:f32,h:f32, flags: CornerFlags, state: WidgetState,
+        x:f32,y:f32, w:f32,h:f32, flags: CornerFlags, state: ItemState,
         iconid: u32, label: &str
     ) {
         let mut cr: [f32, ..4] = [0.0, ..4]; //float cr[4];
@@ -99,7 +99,7 @@ impl<'a> ThemedDraw for ThemedContext<'a>
     // if label is not NULL, a label will be added to the widget
     // widget looks best when height is WIDGET_HEIGHT
     fn draw_radio_button(&mut self,
-        x:f32,y:f32, w:f32,h:f32, flags: CornerFlags, state: WidgetState,
+        x:f32,y:f32, w:f32,h:f32, flags: CornerFlags, state: ItemState,
         iconid: u32, label: &str
     ) {
         let mut cr: [f32, ..4] = [0.0, ..4]; //float cr[4];
@@ -132,7 +132,7 @@ impl<'a> ThemedDraw for ThemedContext<'a>
     // if cend < cbegin, then no caret will be drawn
     // widget looks best when height is WIDGET_HEIGHT
     fn draw_text_field(&mut self,
-        x:f32,y:f32, w:f32,h:f32, flags: CornerFlags, state: WidgetState,
+        x:f32,y:f32, w:f32,h:f32, flags: CornerFlags, state: ItemState,
         iconid: u32, text: &str, cbegin: uint, cend: uint
     ) {
         let mut cr: [f32, ..4] = [0.0, ..4]; //float cr[4];
@@ -167,7 +167,7 @@ impl<'a> ThemedDraw for ThemedContext<'a>
     // if label is not NULL, a label will be added to the widget
     // widget looks best when height is WIDGET_HEIGHT
     fn draw_option_button(&mut self,
-        x:f32,y:f32, w:f32,h:f32, state: WidgetState,
+        x:f32,y:f32, w:f32,h:f32, state: ItemState,
         label: &str
     ) {
         let mut shade_top: Color = black();
@@ -210,7 +210,7 @@ impl<'a> ThemedDraw for ThemedContext<'a>
     // if label is not NULL, a label will be added to the widget
     // widget looks best when height is WIDGET_HEIGHT
     fn draw_choice_button(&mut self,
-        x:f32,y:f32, w:f32,h:f32, flags: CornerFlags, state: WidgetState,
+        x:f32,y:f32, w:f32,h:f32, flags: CornerFlags, state: ItemState,
         iconid: u32, label: &str
     ) {
         let mut cr: [f32, ..4] = [0.0, ..4]; //float cr[4];
@@ -244,7 +244,7 @@ impl<'a> ThemedDraw for ThemedContext<'a>
     // a ":" separator
     // widget looks best when height is WIDGET_HEIGHT
     fn draw_number_field(&mut self,
-        x:f32,y:f32, w:f32,h:f32, flags: CornerFlags, state: WidgetState,
+        x:f32,y:f32, w:f32,h:f32, flags: CornerFlags, state: ItemState,
         label: &str, value: &str
     ) {
         let mut cr: [f32, ..4] = [0.0, ..4]; //float cr[4];
@@ -280,7 +280,7 @@ impl<'a> ThemedDraw for ThemedContext<'a>
     // a ":" separator
     // widget looks best when height is WIDGET_HEIGHT
     fn draw_slider(&mut self,
-        x:f32,y:f32, w:f32,h:f32, flags: CornerFlags, state: WidgetState,
+        x:f32,y:f32, w:f32,h:f32, flags: CornerFlags, state: ItemState,
         progress: f32, label: &str, value: &str
     ) {
         let mut cr: [f32, ..4] = [0.0, ..4]; //float cr[4];
@@ -327,7 +327,7 @@ impl<'a> ThemedDraw for ThemedContext<'a>
     // horizontal widget looks best when height is SCROLLBAR_HEIGHT,
     // vertical looks best when width is SCROLLBAR_WIDTH
     fn draw_scrollbar(&mut self,
-        x:f32,y:f32, w:f32,h:f32, state: WidgetState,
+        x:f32,y:f32, w:f32,h:f32, state: ItemState,
         offset: f32, size: f32
     ) {
         let bg = self.theme().backgroundColor;
@@ -382,7 +382,7 @@ impl<'a> ThemedDraw for ThemedContext<'a>
 
         select_corners(&mut cr, MENU_RADIUS, flags);
         inner_colors(&mut shade_top, &mut shade_down, &self.theme().menuTheme,
-            DEFAULT, false);
+            COLD, false);
         self.nvg().draw_inner_box(x, y, w, h+1.0, cr[0], cr[1], cr[2], cr[3], shade_top, shade_down);
         let outline = self.theme().menuTheme.outlineColor;
         self.nvg().draw_outline_box(x, y, w, h+1.0, cr[0], cr[1], cr[2], cr[3],
@@ -412,12 +412,12 @@ impl<'a> ThemedDraw for ThemedContext<'a>
     // if label is not NULL, a label will be added to the widget
     // widget looks best when height is WIDGET_HEIGHT
     fn draw_menu_item(&mut self,
-        x:f32,y:f32, w:f32,h:f32, state: &mut WidgetState,
+        x:f32,y:f32, w:f32,h:f32, state: &mut ItemState,
         iconid: u32, label: &str
     ) {
         let top = self.theme().menuItemTheme.shadeTop;
         let down = self.theme().menuItemTheme.shadeDown;
-        if *state != DEFAULT {
+        if *state != COLD {
             let color = self.theme().menuItemTheme.innerSelectedColor;
             self.nvg().draw_inner_box(x, y, w, h, 0.0, 0.0, 0.0, 0.0,
                 offset_color(color, top),
@@ -438,7 +438,7 @@ impl<'a> ThemedDraw for ThemedContext<'a>
         let mut shade_down = black();
 
         inner_colors(&mut shade_top, &mut shade_down, &self.theme().tooltipTheme,
-            DEFAULT, false);
+            COLD, false);
         self.nvg().draw_inner_box(x, y, w, h+1.0,
             MENU_RADIUS, MENU_RADIUS, MENU_RADIUS, MENU_RADIUS,
             shade_top, shade_down);

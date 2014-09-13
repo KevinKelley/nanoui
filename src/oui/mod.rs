@@ -1,4 +1,20 @@
 
+pub use super::{
+    CornerFlags,
+    CORNER_TOP,
+    CORNER_TOP_LEFT,
+    CORNER_TOP_RIGHT,
+    CORNER_DOWN,
+    CORNER_DOWN_LEFT,
+    CORNER_DOWN_RIGHT,
+    CORNER_LEFT,
+    CORNER_RIGHT,
+    CORNER_NONE,
+    CORNER_ALL,
+    ItemState,
+    COLD,HOT,ACTIVE,FROZEN,
+};
+
 use std::mem::{zeroed,transmute};
 
 
@@ -12,19 +28,6 @@ use std::mem::{zeroed,transmute};
 
 pub type Tag = u64;
 
-
-#[deriving(Eq,PartialEq, Show)]
-#[repr(u32)]
-pub enum ItemState {
-    /// the item is inactive
-    COLD   = 0,
-    /// the item is inactive, but the cursor is hovering over this item
-    HOT    = 1,
-    /// the item is toggled or activated (depends on item kind)
-    ACTIVE = 2,
-    /// the item is unresponsive
-    FROZEN = 3,
-}
 
 bitflags!(
     #[deriving(Show)]
@@ -76,6 +79,9 @@ bitflags!(
         static APPEND           = 16
     }
 )
+
+
+
 
 //pub type Handler = Option<extern "C" fn(arg1: i32, arg2: EventFlags)>;
 pub type Handler<Wgt> = Option<fn(ui: &mut Context<Wgt>, arg1: Item, arg2: EventFlags)>;

@@ -2,14 +2,11 @@
 use std::gc::{Gc};
 use std::cell::{Cell};  // shared refs to ui-updatable data
 
-use blendish;
-use blendish::*;
-//use blendish::ThemedContext;
-use blendish::themed_draw::ThemedDraw;
-use blendish::lowlevel_draw::LowLevelDraw;
+use nanoui::blendish::*;
+use nanoui::blendish::themed_draw::ThemedDraw;
+use nanoui::blendish::lowlevel_draw::LowLevelDraw;
 
-use oui;
-use oui::*;
+use nanoui::oui::*;
 
 
 // FIXME need Some<iconid> apparently (seems to use -1 for no-icon)
@@ -30,11 +27,10 @@ pub enum Widget {
     Panel { unused:i8 }
 }
 ////////////////////////////////////////////////////////////////////////////////
-
 // calculate which corners are sharp for an item, depending on whether
 // the container the item is in has negative spacing, and the item
 // is first or last element in a sequence of 2 or more elements.
-fn corner_flags(ui: &mut Context<Widget>, item: Item) -> CornerFlags {
+pub fn corner_flags(ui: &mut Context<Widget>, item: Item) -> CornerFlags {
     let parent = ui.parent(item);
     if parent.invalid() { return CORNER_NONE };
     let numsibs = ui.get_child_count(parent);
@@ -63,6 +59,7 @@ fn corner_flags(ui: &mut Context<Widget>, item: Item) -> CornerFlags {
     return CORNER_NONE;
 }
 
+
 // TODO consolidate oui::ItemState and blendish::WidgetState
 ////oui::ItemState
 //    COLD   = ffi::UI_COLD,    // default
@@ -83,12 +80,11 @@ fn draw_ui(ui: &mut Context<Widget>, vg: &mut ThemedContext, item: Item, x: i32,
     };
 
     // OUI extends state, adding a "frozen" which gets dimmed
-    let item_state = ui.get_state(item);
-    let (widget_state, frozen) = match item_state {
-        COLD => (DEFAULT, false),
-        HOT => (HOVER, false),
-        oui::ACTIVE => (blendish::ACTIVE, false),
-        _ => (DEFAULT, true)
+    let (item_state, frozen) = match ui.get_state(item) {
+        COLD => (COLD, false),
+        HOT => (HOT, false),
+        ACTIVE => (ACTIVE, false),
+        _ => (COLD, true)
     };
     if frozen {
         vg.nvg().global_alpha(DISABLED_ALPHA);
@@ -109,19 +105,19 @@ fn draw_ui(ui: &mut Context<Widget>, vg: &mut ThemedContext, item: Item, x: i32,
         }
         Button { iconid:iconid, text:ref label } => {
             vg.draw_tool_button(x, y, w, h,
-                cornerflags, widget_state,
+                cornerflags, item_state,
                 iconid as u32, label.as_slice());
         }
         Check { text:ref label, option:option } => {
             let state =
-                if option.get() { blendish::ACTIVE }
-                else { widget_state };
+                if option.get() { ACTIVE }
+                else { item_state };
             vg.draw_option_button(x, y, w, h, state, label.as_slice());
         }
         Radio { iconid:iconid, text:ref label, index:index } => {
             let state =
-                if (*index).get() == kidid { blendish::ACTIVE }
-                else { widget_state };
+                if (*index).get() == kidid { ACTIVE }
+                else { item_state };
             vg.draw_radio_button(x, y, w, h,
                 cornerflags, state,
                 iconid as u32, label.as_slice());
@@ -130,7 +126,7 @@ fn draw_ui(ui: &mut Context<Widget>, vg: &mut ThemedContext, item: Item, x: i32,
             let val = progress.get();
             let val_str = format!("{}", val*100.0);
             vg.draw_slider(x, y, w, h,
-                cornerflags, widget_state,
+                cornerflags, item_state,
                 val, label.as_slice(), val_str.as_slice());
         }
         _ => {}

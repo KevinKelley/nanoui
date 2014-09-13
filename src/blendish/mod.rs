@@ -11,6 +11,19 @@ pub use self::theme::*;
 
 pub use nanovg::Align as TextAlignment;
 
+pub use super::{
+    CornerFlags,
+    CORNER_TOP,
+    CORNER_TOP_LEFT,
+    CORNER_TOP_RIGHT,
+    CORNER_DOWN,
+    CORNER_DOWN_LEFT,
+    CORNER_DOWN_RIGHT,
+    CORNER_NONE,
+    ItemState,
+    COLD,HOT,ACTIVE,FROZEN,
+};
+
 pub mod constants;
 pub mod theme;
 
@@ -32,44 +45,6 @@ pub fn rgba_f(r:f32, g:f32, b:f32, a:f32) -> Color { Color::rgba_f(r, g, b, a) }
 pub fn black() -> Color { Color::rgba(0,0,0,1) }
 
 
-#[deriving(Clone, Eq, PartialEq, Show)]
-#[repr(u32)]
-pub enum WidgetState {
-    /// not interacting
-    DEFAULT  = 0,
-    /// the mouse is hovering over the control
-    HOVER    = 1,
-    /// the widget is activated (pressed) or in an active state (toggled)
-    ACTIVE   = 2,
-}
-
-/// flags indicating which corners are sharp (for grouping widgets)
-bitflags!(
-    flags CornerFlags: u32 {
-        // all corners are round
-        static CORNER_NONE         = 0,
-        // sharp top left corner
-        static CORNER_TOP_LEFT     = 1,
-        // sharp top right corner
-        static CORNER_TOP_RIGHT    = 2,
-        // sharp bottom right corner
-        static CORNER_DOWN_RIGHT   = 4,
-        // sharp bottom left corner
-        static CORNER_DOWN_LEFT    = 8,
-        // all corners are sharp;
-        // you can invert a set of flags using ^= BND_CORNER_ALL
-        static CORNER_ALL          = 0xF,
-        // top border is sharp
-        static CORNER_TOP          = 3,
-        // bottom border is sharp
-        static CORNER_DOWN         = 0xC,
-        // left border is sharp
-        static CORNER_LEFT         = 9,
-        // right border is sharp
-        static CORNER_RIGHT        = 6
-    }
-)
-
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -82,8 +57,8 @@ bitflags!(
 // pub fn transparent(color: Color) -> Color
 // pub fn offset_color(color: Color, delta: i32) -> Color
 // pub fn select_corners(radiuses: &mut [f32, ..4], r: f32, flags: CornerFlags)
-// pub fn inner_colors(shade_top: &mut Color, shade_down: &mut Color, theme: &WidgetTheme, state: WidgetState, flipActive: bool
-// pub fn text_color(theme: &WidgetTheme, state: WidgetState) -> Color
+// pub fn inner_colors(shade_top: &mut Color, shade_down: &mut Color, theme: &WidgetTheme, state: ItemState, flipActive: bool
+// pub fn text_color(theme: &WidgetTheme, state: ItemState) -> Color
 // pub fn scroll_handle_rect(x: &mut f32, y: &mut f32, w: &mut f32, h: &mut f32, offset: f32, size: f32
 
 
@@ -151,15 +126,18 @@ pub fn select_corners(radiuses: &mut [f32, ..4], r: f32, flags: CornerFlags)
 // theme and the widgets state. If flipActive is set and the state is
 // ACTIVE, the upper and lower colors will be swapped.
 pub fn inner_colors(shade_top: &mut Color, shade_down: &mut Color,
-    theme: &WidgetTheme, state: WidgetState, flipActive: bool)
+    theme: &WidgetTheme, state: ItemState, flipActive: bool)
 {
     match state {
-	    //default:
-	    DEFAULT => {
-	        *shade_top = offset_color(theme.innerColor, theme.shadeTop);
-	        *shade_down = offset_color(theme.innerColor, theme.shadeDown);
-	    },
-	    HOVER => {
+        FROZEN => {
+            *shade_top = offset_color(theme.innerColor, theme.shadeTop);
+            *shade_down = offset_color(theme.innerColor, theme.shadeDown);
+        },
+        COLD => {
+            *shade_top = offset_color(theme.innerColor, theme.shadeTop);
+            *shade_down = offset_color(theme.innerColor, theme.shadeDown);
+        },
+	    HOT => {
 	        let color = offset_color(theme.innerColor, HOVER_SHADE);
 	        *shade_top = offset_color(color, theme.shadeTop);
 	        *shade_down = offset_color(color, theme.shadeDown);
@@ -175,7 +153,7 @@ pub fn inner_colors(shade_top: &mut Color, shade_down: &mut Color,
 
 // computes the text color for a widget label from a widget theme and the
 // widgets state.
-pub fn text_color(theme: &WidgetTheme, state: WidgetState) -> Color
+pub fn text_color(theme: &WidgetTheme, state: ItemState) -> Color
 {
     return if state == ACTIVE {theme.textSelectedColor} else {theme.textColor};
 }
