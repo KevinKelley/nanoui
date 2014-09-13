@@ -1,21 +1,15 @@
-#![crate_type = "lib"]
 
-#![feature(globs)]
-#![allow(non_snake_case_functions)]  // themes need converting
-//#![warn(missing_doc)]
-
-extern crate libc;
 extern crate nanovg;
 
 pub use nanovg::Color;
 pub use nanovg::Winding;
 pub use nanovg::CCW;
 pub use nanovg::{Image, Font};
-pub use constants::*;
-pub use theme::ThemedContext;
-pub use theme::*;
+pub use self::constants::*;
+pub use self::theme::ThemedContext;
+pub use self::theme::*;
 
-pub use TextAlignment = nanovg::Align;
+pub use nanovg::Align as TextAlignment;
 
 pub mod constants;
 pub mod theme;

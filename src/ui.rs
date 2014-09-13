@@ -4,7 +4,7 @@ use std::cell::{Cell};  // shared refs to ui-updatable data
 
 use blendish;
 use blendish::*;
-use blendish::ThemedContext;
+//use blendish::ThemedContext;
 use blendish::themed_draw::ThemedDraw;
 use blendish::lowlevel_draw::LowLevelDraw;
 

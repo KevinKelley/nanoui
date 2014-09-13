@@ -1,13 +1,6 @@
-#![feature(globs)]
-#![allow(non_snake_case_functions)]  // temporarily
-#![allow(non_camel_case_types)]  // temporarily
-#![allow(dead_code)]  // temporarily
-#![allow(unused_variable)]
 
-extern crate libc;
-use std::mem::{zeroed};
+use std::mem::{zeroed,transmute};
 
-//mod ffi;  // just for some constants; this is a port, not a wrap
 
 // an OUI context holds a nested hierarchy of Items.
 // there are 2 kinds of info that can be associated with an Item:
@@ -95,7 +88,7 @@ pub struct Vec2 {
 }
 impl Vec2 {
     pub fn zero() -> Vec2 { Vec2 { x: 0, y: 0 } }
-    pub fn as_mut_slice(&mut self) -> &mut [i32, ..2u] { unsafe { std::mem::transmute(self) } }
+    pub fn as_mut_slice(&mut self) -> &mut [i32, ..2u] { unsafe { transmute(self) } }
 }
 impl<'a> Index<uint, i32> for Vec2 {
     fn index<'a>(&'a self, index: &uint) -> &'a i32 {
@@ -126,7 +119,7 @@ pub struct Rect {
 }
 impl Rect {
     pub fn zero() -> Rect { Rect { x:0, y:0, w:0, h:0 } }
-    pub fn as_mut_slice(&mut self) -> &mut [i32, ..4u] { unsafe { std::mem::transmute(self) } }
+    pub fn as_mut_slice(&mut self) -> &mut [i32, ..4u] { unsafe { transmute(self) } }
 }
 // indexers turn out to be not really useful, because mut
 impl<'a> Index<uint, i32> for Rect {
