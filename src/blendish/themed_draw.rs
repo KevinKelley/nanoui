@@ -1,5 +1,6 @@
 
 use nanovg::{Color, LEFT,CENTER };
+use util::{transparent};
 use super::constants::*;
 use super::*;
 use super::lowlevel_draw::LowLevelDraw;
@@ -31,26 +32,26 @@ impl<'a> ThemedDraw for ThemedContext<'a>
     // --------------------
     // Use these functions to draw themed widgets with your NVGcontext.
 
-    // Draw a flat panel without any decorations at position (x, y) with size (w, h)
-    // and fills it with theme's backgroundColor
+    /// Draw a flat panel without any decorations at position (x, y) with size (w, h)
+    /// and fills it with theme's backgroundColor
     fn draw_background(&mut self, x:f32,y:f32, w:f32,h:f32)
     {
         let bg = self.theme().backgroundColor;
         self.nvg().draw_background(x,y, w,h, bg);
     }
 
-    // Draw a beveled border at position (x, y) with size (w, h) shaded with
-    // lighter and darker versions of backgroundColor
+    /// Draw a beveled border at position (x, y) with size (w, h) shaded with
+    /// lighter and darker versions of backgroundColor
     fn draw_bevel(&mut self, x:f32,y:f32, w:f32,h:f32)
     {
         let bg = self.theme().backgroundColor;
         self.nvg().draw_bevel(x,y, w,h, bg);
     }
 
-    // Draw a label with its lower left origin at (x, y) and size of (w, h).
-    // if iconid >= 0, an icon will be added to the widget
-    // if label is not NULL, a label will be added to the widget
-    // widget looks best when height is WIDGET_HEIGHT
+    /// Draw a label with its lower left origin at (x, y) and size of (w, h).
+    /// if iconid >= 0, an icon will be added to the widget
+    /// if label is not NULL, a label will be added to the widget
+    /// widget looks best when height is WIDGET_HEIGHT
     fn draw_label(&mut self,
         x:f32,y:f32, w:f32,h:f32, iconid: u32, label: &str
     ) {
@@ -62,12 +63,12 @@ impl<'a> ThemedDraw for ThemedContext<'a>
             &font, LABEL_FONT_SIZE, label, None);
     }
 
-    // Draw a tool button  with its lower left origin at (x, y) and size of (w, h),
-    // where flags is one or multiple flags from BNDcornerFlags and state denotes
-    // the widgets current UI state.
-    // if iconid >= 0, an icon will be added to the widget
-    // if label is not NULL, a label will be added to the widget
-    // widget looks best when height is WIDGET_HEIGHT
+    /// Draw a tool button  with its lower left origin at (x, y) and size of (w, h),
+    /// where flags is one or multiple flags from BNDcornerFlags and state denotes
+    /// the widgets current UI state.
+    /// if iconid >= 0, an icon will be added to the widget
+    /// if label is not NULL, a label will be added to the widget
+    /// widget looks best when height is WIDGET_HEIGHT
     fn draw_tool_button(&mut self,
         x:f32,y:f32, w:f32,h:f32, flags: CornerFlags, state: ItemState,
         iconid: u32, label: &str
@@ -92,12 +93,12 @@ impl<'a> ThemedDraw for ThemedContext<'a>
             &font, LABEL_FONT_SIZE, label, None);
     }
 
-    // Draw a radio button with its lower left origin at (x, y) and size of (w, h),
-    // where flags is one or multiple flags from BNDcornerFlags and state denotes
-    // the widgets current UI state.
-    // if iconid >= 0, an icon will be added to the widget
-    // if label is not NULL, a label will be added to the widget
-    // widget looks best when height is WIDGET_HEIGHT
+    /// Draw a radio button with its lower left origin at (x, y) and size of (w, h),
+    /// where flags is one or multiple flags from BNDcornerFlags and state denotes
+    /// the widgets current UI state.
+    /// if iconid >= 0, an icon will be added to the widget
+    /// if label is not NULL, a label will be added to the widget
+    /// widget looks best when height is WIDGET_HEIGHT
     fn draw_radio_button(&mut self,
         x:f32,y:f32, w:f32,h:f32, flags: CornerFlags, state: ItemState,
         iconid: u32, label: &str
@@ -122,15 +123,15 @@ impl<'a> ThemedDraw for ThemedContext<'a>
             &font, LABEL_FONT_SIZE, label, None);
     }
 
-    // Draw a text field with its lower left origin at (x, y) and size of (w, h),
-    // where flags is one or multiple flags from BNDcornerFlags and state denotes
-    // the widgets current UI state.
-    // if iconid >= 0, an icon will be added to the widget
-    // if text is not NULL, text will be printed to the widget
-    // cbegin must be >= 0 and <= strlen(text) and denotes the beginning of the caret
-    // cend must be >= cbegin and <= strlen(text) and denotes the end of the caret
-    // if cend < cbegin, then no caret will be drawn
-    // widget looks best when height is WIDGET_HEIGHT
+    /// Draw a text field with its lower left origin at (x, y) and size of (w, h),
+    /// where flags is one or multiple flags from BNDcornerFlags and state denotes
+    /// the widgets current UI state.
+    /// if iconid >= 0, an icon will be added to the widget
+    /// if text is not NULL, text will be printed to the widget
+    /// cbegin must be >= 0 and <= strlen(text) and denotes the beginning of the caret
+    /// cend must be >= cbegin and <= strlen(text) and denotes the end of the caret
+    /// if cend < cbegin, then no caret will be drawn
+    /// widget looks best when height is WIDGET_HEIGHT
     fn draw_text_field(&mut self,
         x:f32,y:f32, w:f32,h:f32, flags: CornerFlags, state: ItemState,
         iconid: u32, text: &str, cbegin: uint, cend: uint
@@ -161,11 +162,11 @@ impl<'a> ThemedDraw for ThemedContext<'a>
             itemcolor, cbegin, cend);
     }
 
-    // Draw an option button with its lower left origin at (x, y) and size of (w, h),
-    // where flags is one or multiple flags from BNDcornerFlags and state denotes
-    // the widgets current UI state.
-    // if label is not NULL, a label will be added to the widget
-    // widget looks best when height is WIDGET_HEIGHT
+    /// Draw an option button with its lower left origin at (x, y) and size of (w, h),
+    /// where flags is one or multiple flags from BNDcornerFlags and state denotes
+    /// the widgets current UI state.
+    /// if label is not NULL, a label will be added to the widget
+    /// widget looks best when height is WIDGET_HEIGHT
     fn draw_option_button(&mut self,
         x:f32,y:f32, w:f32,h:f32, state: ItemState,
         label: &str
@@ -203,12 +204,12 @@ impl<'a> ThemedDraw for ThemedContext<'a>
             &font, LABEL_FONT_SIZE, label, None);
     }
 
-    // Draw a choice button with its lower left origin at (x, y) and size of (w, h),
-    // where flags is one or multiple flags from BNDcornerFlags and state denotes
-    // the widgets current UI state.
-    // if iconid >= 0, an icon will be added to the widget
-    // if label is not NULL, a label will be added to the widget
-    // widget looks best when height is WIDGET_HEIGHT
+    /// Draw a choice button with its lower left origin at (x, y) and size of (w, h),
+    /// where flags is one or multiple flags from BNDcornerFlags and state denotes
+    /// the widgets current UI state.
+    /// if iconid >= 0, an icon will be added to the widget
+    /// if label is not NULL, a label will be added to the widget
+    /// widget looks best when height is WIDGET_HEIGHT
     fn draw_choice_button(&mut self,
         x:f32,y:f32, w:f32,h:f32, flags: CornerFlags, state: ItemState,
         iconid: u32, label: &str
@@ -236,13 +237,13 @@ impl<'a> ThemedDraw for ThemedContext<'a>
             transparent(color));
     }
 
-    // Draw a number field with its lower left origin at (x, y) and size of (w, h),
-    // where flags is one or multiple flags from BNDcornerFlags and state denotes
-    // the widgets current UI state.
-    // if label is not NULL, a label will be added to the widget
-    // if value is not NULL, a value will be added to the widget, along with
-    // a ":" separator
-    // widget looks best when height is WIDGET_HEIGHT
+    /// Draw a number field with its lower left origin at (x, y) and size of (w, h),
+    /// where flags is one or multiple flags from BNDcornerFlags and state denotes
+    /// the widgets current UI state.
+    /// if label is not NULL, a label will be added to the widget
+    /// if value is not NULL, a value will be added to the widget, along with
+    /// a ":" separator
+    /// widget looks best when height is WIDGET_HEIGHT
     fn draw_number_field(&mut self,
         x:f32,y:f32, w:f32,h:f32, flags: CornerFlags, state: ItemState,
         label: &str, value: &str
@@ -271,14 +272,14 @@ impl<'a> ThemedDraw for ThemedContext<'a>
             transparent(color));
     }
 
-    // Draw slider control with its lower left origin at (x, y) and size of (w, h),
-    // where flags is one or multiple flags from BNDcornerFlags and state denotes
-    // the widgets current UI state.
-    // progress must be in the range 0..1 and controls the size of the slider bar
-    // if label is not NULL, a label will be added to the widget
-    // if value is not NULL, a value will be added to the widget, along with
-    // a ":" separator
-    // widget looks best when height is WIDGET_HEIGHT
+    /// Draw slider control with its lower left origin at (x, y) and size of (w, h),
+    /// where flags is one or multiple flags from BNDcornerFlags and state denotes
+    /// the widgets current UI state.
+    /// progress must be in the range 0..1 and controls the size of the slider bar
+    /// if label is not NULL, a label will be added to the widget
+    /// if value is not NULL, a value will be added to the widget, along with
+    /// a ":" separator
+    /// widget looks best when height is WIDGET_HEIGHT
     fn draw_slider(&mut self,
         x:f32,y:f32, w:f32,h:f32, flags: CornerFlags, state: ItemState,
         progress: f32, label: &str, value: &str
@@ -320,12 +321,12 @@ impl<'a> ThemedDraw for ThemedContext<'a>
             color, CENTER, &font, LABEL_FONT_SIZE, label, Some(value));
     }
 
-    // Draw scrollbar with its lower left origin at (x, y) and size of (w, h),
-    // where state denotes the widgets current UI state.
-    // offset is in the range 0..1 and controls the position of the scroll handle
-    // size is in the range 0..1 and controls the size of the scroll handle
-    // horizontal widget looks best when height is SCROLLBAR_HEIGHT,
-    // vertical looks best when width is SCROLLBAR_WIDTH
+    /// Draw scrollbar with its lower left origin at (x, y) and size of (w, h),
+    /// where state denotes the widgets current UI state.
+    /// offset is in the range 0..1 and controls the position of the scroll handle
+    /// size is in the range 0..1 and controls the size of the scroll handle
+    /// horizontal widget looks best when height is SCROLLBAR_HEIGHT,
+    /// vertical looks best when width is SCROLLBAR_WIDTH
     fn draw_scrollbar(&mut self,
         x:f32,y:f32, w:f32,h:f32, state: ItemState,
         offset: f32, size: f32
@@ -371,8 +372,8 @@ impl<'a> ThemedDraw for ThemedContext<'a>
             transparent(outline));
     }
 
-    // Draw a menu background with its lower left origin at (x, y) and size of (w, h),
-    // where flags is one or multiple flags from BNDcornerFlags.
+    /// Draw a menu background with its lower left origin at (x, y) and size of (w, h),
+    /// where flags is one or multiple flags from BNDcornerFlags.
     fn draw_menu_background(&mut self,
         x:f32,y:f32, w:f32,h:f32, flags: CornerFlags
     ) {
@@ -391,10 +392,10 @@ impl<'a> ThemedDraw for ThemedContext<'a>
             SHADOW_FEATHER, SHADOW_ALPHA);
     }
 
-    // Draw a menu label with its lower left origin at (x, y) and size of (w, h).
-    // if iconid >= 0, an icon will be added to the widget
-    // if label is not NULL, a label will be added to the widget
-    // widget looks best when height is WIDGET_HEIGHT
+    /// Draw a menu label with its lower left origin at (x, y) and size of (w, h).
+    /// if iconid >= 0, an icon will be added to the widget
+    /// if label is not NULL, a label will be added to the widget
+    /// widget looks best when height is WIDGET_HEIGHT
     fn draw_menu_label(&mut self,
         x:f32,y:f32, w:f32,h:f32, iconid: u32, label: &str
     ) {
@@ -406,11 +407,11 @@ impl<'a> ThemedDraw for ThemedContext<'a>
             &font, LABEL_FONT_SIZE, label, None);
     }
 
-    // Draw a menu item with its lower left origin at (x, y) and size of (w, h),
-    // where state denotes the widgets current UI state.
-    // if iconid >= 0, an icon will be added to the widget
-    // if label is not NULL, a label will be added to the widget
-    // widget looks best when height is WIDGET_HEIGHT
+    /// Draw a menu item with its lower left origin at (x, y) and size of (w, h),
+    /// where state denotes the widgets current UI state.
+    /// if iconid >= 0, an icon will be added to the widget
+    /// if label is not NULL, a label will be added to the widget
+    /// widget looks best when height is WIDGET_HEIGHT
     fn draw_menu_item(&mut self,
         x:f32,y:f32, w:f32,h:f32, state: &mut ItemState,
         iconid: u32, label: &str
@@ -431,7 +432,7 @@ impl<'a> ThemedDraw for ThemedContext<'a>
             color, LEFT, &font, LABEL_FONT_SIZE, label, None);
     }
 
-    // Draw a tooltip background with its lower left origin at (x, y) and size of (w, h)
+    /// Draw a tooltip background with its lower left origin at (x, y) and size of (w, h)
     fn draw_tooltip_background(&mut self, x:f32,y:f32, w:f32,h:f32
     ) {
         let mut shade_top = black();

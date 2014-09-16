@@ -12,27 +12,16 @@
 extern crate libc;
 extern crate nanovg;
 
-
-//#[deriving(Clone, Eq, PartialEq, Show)]
-//#[repr(u32)]
-//pub enum WidgetState {
-//    /// not interacting
-//    DEFAULT  = 0,
-//    /// the mouse is hovering over the control
-//    HOVER    = 1,
-//    /// the widget is activated (pressed) or in an active state (toggled)
-//    ACTIVE   = 2,
-//}
 #[deriving(Eq,PartialEq, Show)]
 #[repr(u32)]
 pub enum ItemState {
-    /// the item is inactive
+    /// DEFAULT: the item is not interacting, quiescent but usable (a button not hovered or pushed)
     COLD   = 0,
-    /// the item is inactive, but the cursor is hovering over this item
+    /// HOVER: the item is unactivated, but the cursor is hovering over this item
     HOT    = 1,
-    /// the item is toggled or activated (depends on item kind)
+    /// ACTIVE: the item is toggled or activated (depends on item kind)
     ACTIVE = 2,
-    /// the item is unresponsive
+    /// DISABLED: the item is unresponsive
     FROZEN = 3,
 }
 
@@ -63,8 +52,11 @@ bitflags!(
     }
 )
 
+pub mod util;
+pub mod draw;
 pub mod blendish;
 pub mod oui;
+pub mod widget;
+
 //mod ui;
 //mod resources;
-

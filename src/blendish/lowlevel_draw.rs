@@ -5,11 +5,8 @@ use nanovg::{
     BUTT,MITER, NOREPEAT,
     LEFT,CENTER,BASELINE
 };
-use super::{
-    TextAlignment,
-    min,max,
-    rgba_f,offset_color,transparent,
-};
+use util::{min,max,rgba_f,transparent,offset_color,};
+use super::{TextAlignment};
 use super::constants::*;
 
 
@@ -62,11 +59,11 @@ pub trait LowLevelDraw
 }
 impl LowLevelDraw for Ctx {
 
-    // Add a rounded box path at position (x, y) with size (w, h) and a separate
-    // radius for each corner listed in clockwise order, so that cr0 = top left,
-    // cr1 = top right, cr2 = bottom right, cr3 = bottom left;
-    // this is a low level drawing function: the path must be stroked or filled
-    // to become visible.
+    /// Add a rounded box path at position (x, y) with size (w, h) and a separate
+    /// radius for each corner listed in clockwise order, so that cr0 = top left,
+    /// cr1 = top right, cr2 = bottom right, cr3 = bottom left;
+    /// this is a low level drawing function: the path must be stroked or filled
+    /// to become visible.
     fn draw_rounded_box(&mut self, x:f32,y:f32, w:f32,h:f32,
         cr0: f32, cr1: f32, cr2: f32, cr3: f32
     ) {
@@ -82,8 +79,8 @@ impl LowLevelDraw for Ctx {
         self.close_path();
     }
 
-    // Draw a flat panel without any decorations at position (x, y) with size (w, h)
-    // and fills it with bg color
+    /// Draw a flat panel without any decorations at position (x, y) with size (w, h)
+    /// and fills it with bg color
     fn draw_background(&mut self, x:f32,y:f32, w:f32,h:f32, bg: Color)
     {
         self.begin_path();
@@ -92,8 +89,8 @@ impl LowLevelDraw for Ctx {
         self.fill();
     }
 
-    // Draw a beveled border at position (x, y) with size (w, h) shaded with
-    // lighter and darker versions of backgroundColor
+    /// Draw a beveled border at position (x, y) with size (w, h) shaded with
+    /// lighter and darker versions of backgroundColor
     fn draw_bevel(&mut self, x:f32,y:f32, w:f32,h:f32, bg: Color)
     {
         self.stroke_width(1.0);
@@ -120,10 +117,10 @@ impl LowLevelDraw for Ctx {
         self.stroke();
     }
 
-    // Draw a lower inset for a rounded box at position (x, y) with size (w, h)
-    // that gives the impression the surface has been pushed in.
-    // cr2 and cr3 contain the radiuses of the bottom right and bottom left
-    // corners of the rounded box.
+    /// Draw a lower inset for a rounded box at position (x, y) with size (w, h)
+    /// that gives the impression the surface has been pushed in.
+    /// cr2 and cr3 contain the radiuses of the bottom right and bottom left
+    /// corners of the rounded box.
     fn draw_bevel_inset(&mut self, x:f32,y:f32, w:f32,h:f32,
         cr2: f32, cr3: f32,
         bg: Color
@@ -151,9 +148,9 @@ impl LowLevelDraw for Ctx {
         self.stroke();
     }
 
-    // Draw a drop shadow around the rounded box at (x, y) with size (w, h) and
-    // radius r, with feather as its maximum range in pixels.
-    // No shadow will be painted inside the rounded box.
+    /// Draw a drop shadow around the rounded box at (x, y) with size (w, h) and
+    /// radius r, with feather as its maximum range in pixels.
+    /// No shadow will be painted inside the rounded box.
     fn draw_drop_shadow(&mut self, x:f32,y:f32, w:f32,h:f32,
         r: f32, feather: f32, alpha: f32
     ) {
@@ -185,9 +182,9 @@ impl LowLevelDraw for Ctx {
         self.fill();
     }
 
-    // Draw the inner part of a widget box, with a gradient from shade_top to
-    // shade_down. If h>w, the gradient will be horizontal instead of
-    // vertical.
+    /// Draw the inner part of a widget box, with a gradient from shade_top to
+    /// shade_down. If h>w, the gradient will be horizontal instead of
+    /// vertical.
     fn draw_inner_box(&mut self, x:f32,y:f32, w:f32,h:f32,
         cr0: f32, cr1: f32, cr2: f32, cr3: f32,
         shade_top: Color, shade_down: Color
@@ -201,7 +198,7 @@ impl LowLevelDraw for Ctx {
         self.fill();
     }
 
-    // Draw the outline part of a widget box with the given color
+    /// Draw the outline part of a widget box with the given color
     fn draw_outline_box(&mut self, x:f32,y:f32, w:f32,h:f32,
         cr0: f32, cr1: f32, cr2: f32, cr3: f32, color: Color
     ) {
@@ -212,8 +209,8 @@ impl LowLevelDraw for Ctx {
         self.stroke();
     }
 
-    // Draw an icon with (x, y) as its upper left coordinate; the iconid selects
-    // the icon from the sheet; use the ICONID macro to build icon IDs.
+    /// Draw an icon with (x, y) as its upper left coordinate; the iconid selects
+    /// the icon from the sheet; use the ICONID macro to build icon IDs.
     fn draw_icon(&mut self, x: f32, y: f32, icons: &Image, iconid: u32)
     {
         //let icons = self.theme().icon_image;
@@ -238,14 +235,14 @@ impl LowLevelDraw for Ctx {
         self.fill();
     }
 
-    // Draw an optional icon specified by <iconid> and an optional label with
-    // given alignment (BNDtextAlignment), fontsize and color within a widget box.
-    // if iconid is >= 0, an icon will be drawn and the labels remaining space
-    // will be adjusted.
-    // if label is not NULL, it will be drawn with the specified alignment, fontsize
-    // and color.
-    // if value is not NULL, label and value will be drawn with a ":" separator
-    // inbetween.
+    /// Draw an optional icon specified by <iconid> and an optional label with
+    /// given alignment (BNDtextAlignment), fontsize and color within a widget box.
+    /// if iconid is >= 0, an icon will be drawn and the labels remaining space
+    /// will be adjusted.
+    /// if label is not NULL, it will be drawn with the specified alignment, fontsize
+    /// and color.
+    /// if value is not NULL, label and value will be drawn with a ":" separator
+    /// inbetween.
     fn draw_icon_label_value(&mut self,
         x:f32,y:f32, w:f32,h:f32,
         icons: &Image,
@@ -311,15 +308,15 @@ impl LowLevelDraw for Ctx {
         }
     }
 
-    // Draw an optional icon specified by <iconid>, an optional label and
-    // a caret with given fontsize and color within a widget box.
-    // if iconid is >= 0, an icon will be drawn and the labels remaining space
-    // will be adjusted.
-    // if label is not NULL, it will be drawn with the specified alignment, fontsize
-    // and color.
-    // cbegin must be >= 0 and <= strlen(text) and denotes the beginning of the caret
-    // cend must be >= cbegin and <= strlen(text) and denotes the end of the caret
-    // if cend < cbegin, then no caret will be drawn
+    /// Draw an optional icon specified by <iconid>, an optional label and
+    /// a caret with given fontsize and color within a widget box.
+    /// if iconid is >= 0, an icon will be drawn and the labels remaining space
+    /// will be adjusted.
+    /// if label is not NULL, it will be drawn with the specified alignment, fontsize
+    /// and color.
+    /// cbegin must be >= 0 and <= strlen(text) and denotes the beginning of the caret
+    /// cend must be >= cbegin and <= strlen(text) and denotes the end of the caret
+    /// if cend < cbegin, then no caret will be drawn
     fn draw_icon_label_caret(&mut self,
         x:f32,y:f32, w:f32,h:f32,
         icons: &Image,
@@ -388,8 +385,8 @@ impl LowLevelDraw for Ctx {
         self.text_box(x, y, w-TEXT_RADIUS-pleft, label);
     }
 
-    // Draw a checkmark for an option box with the given upper left coordinates
-    // (ox, oy) with the specified color.
+    /// Draw a checkmark for an option box with the given upper left coordinates
+    /// (ox, oy) with the specified color.
     fn draw_check(&mut self, ox: f32, oy: f32, color: Color)
     {
         self.begin_path();
@@ -404,8 +401,8 @@ impl LowLevelDraw for Ctx {
     }
 
 
-    // Draw a horizontal arrow for a number field with its center at (x, y) and
-    // size s; if s is negative, the arrow points to the left.
+    /// Draw a horizontal arrow for a number field with its center at (x, y) and
+    /// size s; if s is negative, the arrow points to the left.
     fn draw_arrow(&mut self, x: f32, y: f32, s: f32, color: Color)
     {
         self.begin_path();
@@ -417,7 +414,7 @@ impl LowLevelDraw for Ctx {
         self.fill();
     }
 
-    // Draw an up/down arrow for a choice box with its center at (x, y) and size s
+    /// Draw an up/down arrow for a choice box with its center at (x, y) and size s
     fn draw_up_down_arrow(&mut self, x: f32, y: f32, s: f32, color: Color)
     {
         self.begin_path();

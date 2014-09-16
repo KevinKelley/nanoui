@@ -8,6 +8,7 @@ pub use nanovg::{Image, Font};
 pub use self::constants::*;
 pub use self::theme::ThemedContext;
 pub use self::theme::*;
+pub use util::{min,max,clamp,rgba_f,black,offset_color,};
 
 pub use nanovg::Align as TextAlignment;
 
@@ -35,14 +36,6 @@ pub mod themed_draw;
 // (0,0) designates the upper-leftmost icon, (1,0) the one right next to it,
 // and so on.
 pub fn ICONID(x: u8, y: u8) -> u16 { x as u16 | (y as u16 << 8) }
-
-
-pub fn min(a:f32, b:f32) -> f32 { if a<b { a } else { b } }
-pub fn max(a:f32, b:f32) -> f32 { if a>b { a } else { b } }
-pub fn clamp(v: f32, mn: f32, mx: f32) -> f32 { max(mn, min(mx, v) ) }
-
-pub fn rgba_f(r:f32, g:f32, b:f32, a:f32) -> Color { Color::rgba_f(r, g, b, a) }
-pub fn black() -> Color { Color::rgba(0,0,0,1) }
 
 
 
@@ -83,32 +76,6 @@ pub fn label_width(ctx: &nanovg::Ctx, iconid: i32, label: &str, font: &Font) -> 
 // -------------------
 // these are part of the implementation detail and can be used to theme
 // new kinds of controls in a similar fashion.
-
-// make color transparent using the default alpha value
-pub fn transparent(color: Color) -> Color
-{
-    return rgba_f(
-        color.r(),
-        color.g(),
-        color.b(),
-        color.a() * TRANSPARENT_ALPHA
-    );
-}
-
-
-// offset a color by a given integer delta in the range -100 to 100
-pub fn offset_color(color: Color, delta: i32) -> Color
-{
-    if delta != 0 {
-	    let offset = (delta as f32) / 255.0;
-        return rgba_f(
-            clamp(color.r()+offset, 0.0, 1.0),
-            clamp(color.g()+offset, 0.0, 1.0),
-            clamp(color.b()+offset, 0.0, 1.0),
-            color.a())
-    }
-    return color;
-}
 
 
 // assigns radius r to the four entries of array radiuses depending on whether

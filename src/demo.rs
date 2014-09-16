@@ -13,32 +13,46 @@ extern crate gl;
 extern crate nanovg;
 extern crate nanoui;
 
-use glfw::Context;
+use glfw::Context as GLFWContext;
 use std::gc::{Gc,GC};
 use std::cell::Cell;
 
-use nanovg::{Ctx, ANTIALIAS,STENCIL_STROKES};
+use nanovg::{Ctx, Image, Font, ANTIALIAS,STENCIL_STROKES};
 use nanoui::blendish::theme::ThemedContext;
-use nanoui::oui::Context as UIContext;
+use nanoui::blendish::themed_draw::ThemedDraw;
+use nanoui::oui::Context as OUIContext;
 
-use resources::Resources;
-use ui::Widget;
+use nanoui::oui::widget::*;
+use nanoui::oui::{LEFT,TOP,HFILL};
 
-//mod blendish;
-//mod oui;
-mod ui;
-mod resources;
+mod macros;
 
 
-/// evaluate the expression, then check for GL error.
-macro_rules! glcheck(
-    ($e: expr) => (
-        {
-            $e;
-            assert_eq!(gl::GetError(), 0);
+///////////////////////////////////////////////////////////////////////
+// resource loading, for demo
+pub struct Resources {
+    pub fontNormal: Font,
+    pub iconsheet: Image
+}
+
+/// load and hold resources used in demo
+impl Resources {
+    pub fn load(vg: &Ctx, res_path: &str) -> Resources
+    {
+        let filename = format!("{}/blender_icons16.png", res_path);
+        let icons = vg.create_image(filename.as_slice())
+            .expect(format!("Couldn't load icons image from '{}'", filename).as_slice());
+
+        let filename = format!("{}/DejaVuSans.ttf", res_path);
+        let font = vg.create_font("sans", filename.as_slice())
+            .expect(format!("Could not add font 'sans' from '{}'", filename).as_slice());
+
+        Resources {
+            fontNormal: font,
+            iconsheet:  icons
         }
-    )
-)
+    }
+}
 
 ///////////////////////////////////////////////////////////////////////
 // AppData (some simulated state for UI to modify)
@@ -68,7 +82,7 @@ pub fn init_app_data() -> AppData {
 impl Drop for AppData {
     fn drop(&mut self) {
         // fake save-to-storage
-        println!("drop appdata {}", self);
+        //println!("drop appdata {}", self);
     }
 }
 ///////////////////////////////////////////////////////////////////////
@@ -79,7 +93,7 @@ pub struct App<'a> {
     elapsed_time: f64,          // seconds since app start
     data: AppData,
     themed: ThemedContext<'a>,  // wrap nvg ctx w/ themed-draw fns
-    ui: UIContext<Widget>,
+    ui: OUIContext<Widget>,
 }
 
 impl<'a> App<'a> {
@@ -98,7 +112,7 @@ impl<'a> App<'a> {
             elapsed_time: 0.0,         // time since app start
             data: init_app_data(),
             themed: themed,
-            ui: ui::create(),
+            ui: create(),
         }
     }
     fn nvg(&mut self) -> &mut Ctx { self.themed.nvg() }
@@ -106,12 +120,12 @@ impl<'a> App<'a> {
     // life cycle methods
 
     fn load(&mut self) {
-        ui::init(self);
+        init(self);
     }
 
     fn update(&mut self, dt: f64) {
         self.elapsed_time += dt;
-        ui::update(&mut self.ui, self.mouse, self.button, self.elapsed_time as f32);
+        update(&mut self.ui, self.mouse, self.button, self.elapsed_time as f32);
     }
 
     fn render(&mut self, w:i32, h:i32, pxRatio: f32) {
@@ -119,7 +133,7 @@ impl<'a> App<'a> {
 
         self.nvg().begin_frame(w as i32, h as i32, pxRatio);
 
-        ui::draw(&mut self.ui, &mut self.themed, w,h);
+        draw(&mut self.ui, &mut self.themed, w,h);
 
         self.nvg().end_frame();
     }
@@ -240,4 +254,92 @@ fn handle_window_event(
             }
         }
     }
+}
+
+
+///////////////////////////////////////////////////////////////////////
+// ui
+
+pub fn create() -> OUIContext<Widget> {
+    OUIContext::create_context()
+}
+
+// pub fn init(ui: &mut Context<Widget>, data: &'a AppData) {
+pub fn init(app: &mut App) {
+
+    let ui = &mut app.ui;
+
+    // setup the UI
+
+    ui.clear(); // removes any previous items, currently will break
+                // if multiple-re-init.
+
+    // build the ui hierarchy: start at root,
+    // compose elements into nested groups that flow
+
+    let root = panel(ui);
+    // position root element
+    ui.set_layout(root, LEFT|TOP);
+    ui.set_margins(root, 60, 10, 0, 0);
+    ui.set_size(root, 450, 400);
+
+    let col = column(ui, root);
+    ui.set_margins(col, 10, 10, 10, 10);
+    ui.set_layout(col, TOP|HFILL);
+
+    button(ui, col, 1, icon_id(6, 3), "Item 1", Some(demohandler));
+    button(ui, col, 2, icon_id(6, 3), "Item 2", Some(demohandler));
+
+    {
+        let h = hgroup(ui, col);
+        radio(ui, h, 3, icon_id(6,  3), "Item 3.0", app.data.enum1);
+        radio(ui, h, 4, icon_id(0, 10), "", app.data.enum1);
+        radio(ui, h, 5, icon_id(1, 10), "", app.data.enum1);
+        radio(ui, h, 6, icon_id(6,  3), "Item 3.3", app.data.enum1);
+    }
+
+    {
+        let row = row(ui, col);
+        let left = vgroup(ui, row);
+        label(ui, left, no_icon(), "Items 4.0:");
+        let left_body = vgroup(ui, left);
+        button(ui, left_body, 7, icon_id(6, 3), "Item 4.0.0", Some(demohandler));
+        button(ui, left_body, 8, icon_id(6, 3), "Item 4.0.1", Some(demohandler));
+        let right = vgroup(ui, row);
+        ui.set_frozen(right, app.data.option1.get()); // a bullshit call, to make init match fake data
+        label(ui, right, no_icon(), "Items 4.1:");
+        let right_body = vgroup(ui, right);
+        slider(ui, right_body,  9, "Item 4.1.0", app.data.progress1);
+        slider(ui, right_body, 10, "Item 4.1.1", app.data.progress2);
+    }
+
+    button(ui, col, 11, icon_id(6, 3), "Item 5", None);
+
+    check(ui, col, 12, "Freeze section 4.1", app.data.option1, Some(freezehandler));
+    check(ui, col, 13, "Item 7", app.data.option2, Some(checkhandler));
+    check(ui, col, 14, "Item 8", app.data.option3, Some(checkhandler));
+
+    // structure is built, append-handlers have run (so edge-grabbers are set);
+    // now complete the layout
+
+    ui.layout();
+}
+
+pub fn update(ui: &mut OUIContext<Widget>, (mx,my): (i32,i32), btn: bool, _t: f32) {
+    // apply inputs: mouse and buttons, keys if needed
+
+    ui.set_button(0/*left button*/, btn);
+    ui.set_cursor(mx, my);
+
+    // process input triggers to update item states
+    ui.process();
+}
+
+pub fn draw(ui: &mut OUIContext<Widget>, ctx: &mut ThemedContext, w:f32, h:f32)
+{
+    // draw the ui
+    ctx.draw_background(0.0, 0.0, w, h);
+
+    let root = ui.root();
+    draw_ui(ui, ctx, root, 0, 0);
 }
