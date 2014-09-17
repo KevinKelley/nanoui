@@ -12,15 +12,11 @@ pub use util::{min,max,clamp,rgba_f,black,offset_color,};
 
 pub use nanovg::Align as TextAlignment;
 
-pub use super::{
+pub use draw::corners::{
     CornerFlags,
-    CORNER_TOP,
-    CORNER_TOP_LEFT,
-    CORNER_TOP_RIGHT,
-    CORNER_DOWN,
-    CORNER_DOWN_LEFT,
-    CORNER_DOWN_RIGHT,
-    CORNER_NONE,
+        CORNER_TOP_LEFT,CORNER_TOP_RIGHT,CORNER_DOWN_LEFT,CORNER_DOWN_RIGHT
+};
+pub use super::{
     ItemState,
     COLD,HOT,ACTIVE,FROZEN,
 };
@@ -31,12 +27,7 @@ pub mod theme;
 pub mod lowlevel_draw;
 pub mod themed_draw;
 
-
-// build an icon ID from two coordinates into the icon sheet, where
-// (0,0) designates the upper-leftmost icon, (1,0) the one right next to it,
-// and so on.
-pub fn ICONID(x: u8, y: u8) -> u16 { x as u16 | (y as u16 << 8) }
-
+pub mod widget;
 
 
 ////////////////////////////////////////////////////////////////////////////////

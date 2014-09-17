@@ -1,10 +1,5 @@
 #![feature(globs)]
 #![feature(macro_rules)]
-#![feature(struct_variant)]
-#![feature(unsafe_destructor)]
-#![allow(dead_code)]
-#![allow(non_snake_case)]
-#![allow(unused_variable)]
 
 extern crate native;
 extern crate glfw;
@@ -20,10 +15,11 @@ use std::cell::Cell;
 use nanovg::{Ctx, Image, Font, ANTIALIAS,STENCIL_STROKES};
 use nanoui::blendish::theme::ThemedContext;
 use nanoui::blendish::themed_draw::ThemedDraw;
+use nanoui::blendish::widget::*;
 use nanoui::oui::Context as OUIContext;
-
-use nanoui::oui::widget::*;
 use nanoui::oui::{LEFT,TOP,HFILL};
+
+use nanoui::draw::iconsheet::{icon_id, no_icon};
 
 mod macros;
 
@@ -31,7 +27,7 @@ mod macros;
 ///////////////////////////////////////////////////////////////////////
 // resource loading, for demo
 pub struct Resources {
-    pub fontNormal: Font,
+    pub font_normal: Font,
     pub iconsheet: Image
 }
 
@@ -45,10 +41,10 @@ impl Resources {
 
         let filename = format!("{}/DejaVuSans.ttf", res_path);
         let font = vg.create_font("sans", filename.as_slice())
-            .expect(format!("Could not add font 'sans' from '{}'", filename).as_slice());
+            .expect(format!("Could not load font from '{}'", filename).as_slice());
 
         Resources {
-            fontNormal: font,
+            font_normal: font,
             iconsheet:  icons
         }
     }
@@ -78,13 +74,13 @@ pub fn init_app_data() -> AppData {
         option3:   box (GC) Cell::new(false),
     }
 }
-#[unsafe_destructor]
-impl Drop for AppData {
-    fn drop(&mut self) {
-        // fake save-to-storage
-        //println!("drop appdata {}", self);
-    }
-}
+//#[unsafe_destructor]
+//impl Drop for AppData {
+//    fn drop(&mut self) {
+//        // fake save-to-storage
+//        println!("drop appdata {}", self);
+//    }
+//}
 ///////////////////////////////////////////////////////////////////////
 
 pub struct App<'a> {
@@ -101,7 +97,7 @@ impl<'a> App<'a> {
         let themed = {
             let nvg = Ctx::create_gl3(ANTIALIAS|STENCIL_STROKES);
             let resources = Resources::load(&nvg, "./res");
-            let font = resources.fontNormal;
+            let font = resources.font_normal;
             let icons = resources.iconsheet;
             // move nvg & resources into the ThemedContext
             ThemedContext::wrap(nvg, icons, font)
@@ -128,10 +124,10 @@ impl<'a> App<'a> {
         update(&mut self.ui, self.mouse, self.button, self.elapsed_time as f32);
     }
 
-    fn render(&mut self, w:i32, h:i32, pxRatio: f32) {
+    fn render(&mut self, w:i32, h:i32, px_ratio: f32) {
         let (w,  h) = (w as f32, h as f32);
 
-        self.nvg().begin_frame(w as i32, h as i32, pxRatio);
+        self.nvg().begin_frame(w as i32, h as i32, px_ratio);
 
         draw(&mut self.ui, &mut self.themed, w,h);
 
@@ -185,14 +181,13 @@ fn main() {
             handle_window_event(&window, &mut app, (t, event));
         }
 
-        let (mousex, mousey) = window.get_cursor_pos(); // (f64,f64)
-        let (winWidth, winHeight) = window.get_size();  // (i32,i32)
-        let (fbWidth, fbHeight) = window.get_framebuffer_size();
+        let (win_width, win_height) = window.get_size();  // (i32,i32)
+        let (fb_width, fb_height) = window.get_framebuffer_size();
         // Calculate pixel ration for hi-dpi devices.
-        let pxRatio = fbWidth as f32 / winWidth as f32;
+        let px_ratio = fb_width as f32 / win_width as f32;
 
         // clear framebuffer
-        glcheck!(gl::Viewport(0, 0, fbWidth, fbHeight));
+        glcheck!(gl::Viewport(0, 0, fb_width, fb_height));
         glcheck!(gl::ClearColor(0.0, 0.0, 0.0, 0.0));
         glcheck!(gl::Clear(gl::COLOR_BUFFER_BIT|gl::DEPTH_BUFFER_BIT|gl::STENCIL_BUFFER_BIT));
 
@@ -204,7 +199,7 @@ fn main() {
 
         // Update ui, and render to framebuffer
         app.update(dt);
-        app.render(winWidth, winHeight, pxRatio);
+        app.render(win_width, win_height, px_ratio);
 
         glcheck!(gl::Enable(gl::DEPTH_TEST));
 
@@ -240,7 +235,7 @@ fn handle_window_event(
         glfw::CursorEnterEvent(true)        => println!("Time: {}, Cursor entered window.", time),
         glfw::CursorEnterEvent(false)       => println!("Time: {}, Cursor left window.", time),
         glfw::ScrollEvent(x, y)             => window.set_title(format!("Time: {}, Scroll offset: ({}, {})", time, x, y).as_slice()),
-        glfw::KeyEvent(key, scancode, action, mods) => {
+        glfw::KeyEvent(key, _scancode, action, _mods) => {
             //println!("Time: {}, Key: {}, ScanCode: {}, Action: {}, Modifiers: [{}]", time, key, scancode, action, mods);
             match (key, action) {
                 (glfw::KeyEscape, glfw::Press) => window.set_should_close(true),
@@ -264,7 +259,6 @@ pub fn create() -> OUIContext<Widget> {
     OUIContext::create_context()
 }
 
-// pub fn init(ui: &mut Context<Widget>, data: &'a AppData) {
 pub fn init(app: &mut App) {
 
     let ui = &mut app.ui;
@@ -306,7 +300,7 @@ pub fn init(app: &mut App) {
         button(ui, left_body, 7, icon_id(6, 3), "Item 4.0.0", Some(demohandler));
         button(ui, left_body, 8, icon_id(6, 3), "Item 4.0.1", Some(demohandler));
         let right = vgroup(ui, row);
-        ui.set_frozen(right, app.data.option1.get()); // a bullshit call, to make init match fake data
+        ui.set_frozen(right, app.data.option1.get()); // make initial gui state match data
         label(ui, right, no_icon(), "Items 4.1:");
         let right_body = vgroup(ui, right);
         slider(ui, right_body,  9, "Item 4.1.0", app.data.progress1);

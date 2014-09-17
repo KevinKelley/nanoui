@@ -1,27 +1,10 @@
 
-//pub use {
-//    CornerFlags,
-//        CORNER_TOP,
-//        CORNER_TOP_LEFT,
-//        CORNER_TOP_RIGHT,
-//        CORNER_DOWN,
-//        CORNER_DOWN_LEFT,
-//        CORNER_DOWN_RIGHT,
-//        CORNER_LEFT,
-//        CORNER_RIGHT,
-//        CORNER_NONE,
-//        CORNER_ALL,
-//    ItemState,
-//        COLD,HOT,ACTIVE,FROZEN,
-//};
-
 pub use self::item::Item;
 pub use self::context::Context;
 
 pub mod geom;
 pub mod item;
 pub mod context;
-pub mod widget;
 
 
 // an OUI context holds a nested hierarchy of Items.
@@ -88,4 +71,4 @@ bitflags!(
 
 
 //pub type Handler = Option<extern "C" fn(arg1: i32, arg2: EventFlags)>;
-pub type Handler<Wgt> = Option<fn(ui: &mut Context<Wgt>, arg1: Item, arg2: EventFlags)>;
+pub type Handler<Wgt> = Option<fn(ui: &mut Context<Wgt>, it: Item, evt: EventFlags)>;
