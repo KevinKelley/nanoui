@@ -40,6 +40,10 @@ macro_rules! glcheck(
     )
 )
 
+/// main entry point.
+///
+/// read an html and a css file (default or as specified in cmd-line parameters),
+/// then call App::main.
 fn main() {
     // Parse command-line options:
     let opts = [
@@ -65,20 +69,41 @@ fn main() {
     App::main(html, css);
 }
 
+/// App holds runtime state, like window and graphics-lib contexts.
 struct App<'a> {
+
+    /// use GLFW for window-creation; this is the initialized handle to GLFW library.
     glfw: glfw::Glfw,
+
+    /// application's main window
     window: glfw::Window,
+    /// a channel for receiving events directed to 'window'.
     events: Receiver<(f64, glfw::WindowEvent)>,
+
+    /// NanoVG drawing-context; uses GL to draw vector-graphics primitives to window.
     nvg: nanovg::Ctx,
-    //window_size: (u32,u32),
+
+    /// track mouse-position; redundant with glfw queries
     mouse:(i32,i32),
+    /// track primary-button-press state; redundant
     button:bool,
+
+    /// here's the DOM root...
     root_node: dom::Node,
+    /// ...and the stylesheet to use when rendering it.
     stylesheet: css::Stylesheet,
-    //style_root: style::StyledNode<'a>,
-    //layout_root: layout::LayoutBox<'a>
 }
+
 impl<'a> App<'a> {
+
+    /// create an App, give it the html and css, and run it.
+    fn main(html:String, css:String) {
+        let mut app = App::new();
+        app.load(html, css);
+        app.run();
+    }
+
+    /// initialize libraries, and create a main window.
     fn new<'a>() -> App<'a> {
         // initialize glfw, and create a main-window
         let glfw = glfw::init(glfw::FAIL_ON_ERRORS).unwrap();
@@ -97,15 +122,6 @@ impl<'a> App<'a> {
         // use glfw to load GL function pointers
         glcheck!(gl::load_with(|name| glfw.get_proc_address(name)));
 
-        //glfw.set_swap_interval(0);
-
-
-        //let initial_containing_block = layout::Dimensions::sized(800,600);
-        let no_page = dom::text("no page loaded".to_string());
-        let no_style = css::Stylesheet { rules: vec![] };
-        //let style_root = style::style_tree(&no_page, &no_style);
-        //let layout_root = layout::layout_tree(&style_root, initial_containing_block);
-
         App {
             glfw: glfw,
             window: window,
@@ -113,38 +129,13 @@ impl<'a> App<'a> {
             nvg: nanovg::Ctx::create_gl3(ANTIALIAS|STENCIL_STROKES),
             mouse:(0,0),
             button:false,
-            root_node: no_page,
-            stylesheet: no_style,
-            //style_root: style_root,
-            //layout_root: layout_root
+            root_node: dom::text("no page loaded".to_string()),
+            stylesheet: css::Stylesheet { rules: vec![] },
         }
     }
 
-    fn main(html:String, css:String) {
-//        let glfw = glfw::init(glfw::FAIL_ON_ERRORS).unwrap();
-//
-//        glfw.window_hint(glfw::ContextVersion(3, 2));
-//        glfw.window_hint(glfw::OpenglForwardCompat(true));
-//        glfw.window_hint(glfw::OpenglProfile(glfw::OpenGlCoreProfile));
-//        glfw.window_hint(glfw::OpenglDebugContext(true));
-//        let (window, events) = glfw.create_window(600,480, "Graduate - Robinson", glfw::Windowed)
-//            .expect("Failed to create GLFW window.");
-//
-//        window.set_sticky_keys(true);
-//        window.set_all_polling(true);
-//        window.make_current();
-//
-//        // use glfw to load GL function pointers
-//        glcheck!(gl::load_with(|name| glfw.get_proc_address(name)));
-//
-//        //glfw.set_swap_interval(0);
-
-        let mut app = App::new();
-        app.load(html, css);
-        app.run();
-    }
+    /// process window events and render the display.
     fn run(&mut self) {
-        //let (window, events) = (&self.window, &self.events);
 
         while !self.window.should_close()
         {
@@ -162,10 +153,10 @@ impl<'a> App<'a> {
                 handle_window_event(self, *event);
             }
 
-            let (win_width, win_height) = self.window.get_size();
+            //let (win_width, win_height) = self.window.get_size();
             let (fb_width, fb_height) = self.window.get_framebuffer_size();
             // Calculate pixel ration for hi-dpi devices.
-            let px_ratio = fb_width as f32 / win_width as f32;
+            //let px_ratio = fb_width as f32 / win_width as f32;
 
             // clear framebuffer
             glcheck!(gl::Viewport(0, 0, fb_width, fb_height));
@@ -180,7 +171,7 @@ impl<'a> App<'a> {
 
             // Update ui, and render to framebuffer
             self.update();
-            self.render(win_width as uint, win_height as uint, px_ratio);
+            self.render();
 
             glcheck!(gl::Enable(gl::DEPTH_TEST));
 
@@ -209,17 +200,30 @@ impl<'a> App<'a> {
 
     fn update(&self) {/*pass in mouse/key/window state too*/}
 
-    fn render(&mut self, w:uint,h:uint, px_ratio:f32) {
+    fn render(&mut self) {
 
-        let containing_block = layout::Dimensions::sized(w,0);
+            let (win_width, win_height) = self.window.get_size();
+            let (fb_width, _fb_height) = self.window.get_framebuffer_size();
+            // Calculate pixel ration for hi-dpi devices.
+            let px_ratio = fb_width as f32 / win_width as f32;
+
+        // TODO - have to pass '0' height to root layout,
+        // or it'll position stuff below existing window
+        let containing_block = layout::Dimensions::sized(win_width as uint, 0);
+
         let style_root = style::style_tree(&self.root_node, &self.stylesheet);
         let layout_root = layout::layout_tree(&style_root, containing_block);
 
-        self.nvg.begin_frame(w as i32, h as i32, px_ratio);
+        // TODO figure out where/how to manage resources... layout and render need access
+        let filename = format!("{}/DejaVuSans.ttf", "./res");
+        let font = self.nvg.create_font("sans", filename.as_slice())
+            .expect(format!("Could not load font from '{}'", filename).as_slice());
 
-        layout_root.render(&mut self.nvg);
+        self.nvg.begin_frame(win_width as i32, win_height as i32, px_ratio);
 
-        dump(&layout_root);
+        layout_root.render(&mut self.nvg, &font);
+
+        dump_bounds(&layout_root, 0);
 
         self.nvg.end_frame();
     }
@@ -240,14 +244,11 @@ fn handle_window_event(
     }
 }
 
-fn dump<'a>(node: &layout::LayoutBox<'a>) {
-    dump_rec(node, 0);
-}
-fn dump_rec<'a>(node: &layout::LayoutBox<'a>, level: uint) {
-    let spaces = String::from_char(level, ' ');
+fn dump_bounds<'a>(node: &layout::LayoutBox<'a>, level: uint) {
+    let spaces = String::from_char(level*2, ' ');
     let d = node.dimensions;
     println!("{}{},{} - {},{} border: {}", spaces, d.x,d.y, d.width,d.height, d.border);
     for ch in node.children.iter() {
-        dump_rec(ch, level + 1);
+        dump_bounds(ch, level+1);
     }
 }

@@ -13,7 +13,7 @@ pub type PropertyMap =  HashMap<String, Value>;
 /// A node with associated style data.
 #[deriving(Show)]
 pub struct StyledNode<'a> {
-    node: Option<&'a Node>,
+    pub node: Option<&'a Node>,
     pub specified_values: PropertyMap,
     pub children: Vec<StyledNode<'a>>,
 }

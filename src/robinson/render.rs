@@ -1,15 +1,20 @@
 #![allow(unused_variable)]
 
-use nanovg::{Ctx, Color};
+use nanovg::{
+    Ctx,
+    Color, Font,
+    LEFT, BASELINE
+};
 use robinson::layout::LayoutBox;
 use robinson::css;
+use robinson::dom;
 
 pub trait Render {
-	fn render(&self, &mut Ctx);
+	fn render(&self, &mut Ctx, &Font);
 }
 
 impl<'a> Render for LayoutBox<'a> {
-	fn render(&self, nvg: &mut Ctx) {
+	fn render(&self, nvg: &mut Ctx, font: &Font) {
         let style = self.get_style_node();
         let d = &self.dimensions;
 
@@ -71,8 +76,25 @@ impl<'a> Render for LayoutBox<'a> {
         // clip to content-box
         //nvg.scissor(d.x, d.y, d.width, d.height);
 
+        // draw own content, whatever it may be (should maybe transform viewport)
+        match style.node {
+        	Some(node) => {
+        		match node.node_type {
+        			dom::Element(ref edata) => {}
+        			dom::Text(ref text) => {
+					let black = css::Color(0,0,0, 255);
+		        		let color = style.lookup("text-color", "color", &black).to_color();
+		        		let fontsize = 24.0;
+        				draw_text(nvg, d.x,d.y, d.width,d.height, text.as_slice(), font, fontsize, color);
+        			}
+        		}
+        	}
+        	None => {}
+        }
+
+
         for child in self.children.iter() {
-        	child.render(nvg);
+        	child.render(nvg, font);
         }
 
         nvg.restore();
@@ -92,4 +114,21 @@ fn draw_line(nvg: &mut Ctx, x1:f32,y1:f32, x2:f32,y2:f32, line_width:f32, color:
     nvg.stroke_width(line_width);
     nvg.stroke_color(color);
     nvg.stroke();
+}
+fn draw_text(
+	nvg: &mut Ctx,
+	x:f32,y:f32, w:f32,h:f32,
+	text: &str,
+	font: &Font,
+	fontsize: f32,
+	color:Color
+) {
+    nvg.font_face_id(font);
+    nvg.font_size(fontsize);
+    nvg.text_align(LEFT|BASELINE);
+
+    // finally draw the text
+    nvg.begin_path();
+    nvg.fill_color(color);
+    nvg.text_box(x, y+h + 24.0, 600.0, text);
 }
