@@ -16,25 +16,6 @@ pub mod window;
 
 pub mod unused;
 
-pub enum Morph {
-	ImageMorph(Image),
-	TextMorph(String, Font),
-	ShapeMorph(Shape),
-	WidgetMorph(Widget),
-	CompositeMorph(Vec<Box<Morph>>)
-}
-
-pub struct Shape {
-	path: Path,
-	stroke: Color,
-	fill: Color
-}
-pub enum Path {
-	MoveTo(Point),
-	LineTo(Point),
-	QuadTo(Point),
-	BezierTo(Point),
-}
 
 pub enum Widget {
 	Button,

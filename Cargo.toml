@@ -5,6 +5,9 @@ version = "0.0.1"
 authors = ["Kevin Kelley <kevin@kelleysoft.com>"]
 
 
+[dependencies.inspect]
+git = "https://github.com/reem/rust-inspect"
+
 [dependencies.nanovg]
 #path = "../nanovg-rs"
 git = "https://github.com/KevinKelley/nanovg-rs"
@@ -39,3 +42,11 @@ path = "src/lib.rs"
 [[bin]]
 name = "demo"
 path = "src/demo.rs"
+
+[[bin]]
+name = "robinson"
+path = "src/robinson/main.rs"
+
+[[bin]]
+name = "rendered"
+path = "src/robinson/rendered.rs"

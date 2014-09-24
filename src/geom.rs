@@ -22,7 +22,7 @@ impl<T: Num + Copy> Clone for Point<T> {
 	}
 }
 #[test]
-fn testClone() {
+fn test_clone_really_clones_not_share_data() {
 	let mut a: Point<i32> = Point::<i32>::new(1,2);
 	let b: Point<i32> = a.clone();
 	a.vals[0] = 3;
