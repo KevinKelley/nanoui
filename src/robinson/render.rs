@@ -88,6 +88,7 @@ impl<'a> Render for LayoutBox<'a> {
         				draw_text(nvg, d.x,d.y, d.width,d.height, text.as_slice(), font, fontsize, color);
         			}
         		}
+        		//if let dom::Element(ref edata) = node.node_type {}
         	}
         	None => {}
         }
@@ -131,4 +132,12 @@ fn draw_text(
     nvg.begin_path();
     nvg.fill_color(color);
     nvg.text_box(x, y+h + 24.0, 600.0, text);
+}
+
+pub fn measure_text(nvg: &mut Ctx, text: &str, font: &Font, fontsize: f32) -> (f32,f32) {
+    // nvg uses [xmin,ymin, xmax,ymax] for bounds;
+    let mut bounds = [0.0, ..4];
+    nvg.text_bounds(0.0, 0.0, text, &mut bounds);
+    // return (xmax-xmin, ymax-ymin) which is to say, (xsize,ysize)
+    (bounds[2]-bounds[0], bounds[3]-bounds[1])
 }

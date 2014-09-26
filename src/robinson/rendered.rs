@@ -223,7 +223,8 @@ impl<'a> App<'a> {
 
         layout_root.render(&mut self.nvg, &font);
 
-        dump_bounds(&layout_root, 0);
+        println!(""); dump_bounds(&layout_root, 0);
+        //println!(""); inspect!(layout_root);
 
         self.nvg.end_frame();
     }
@@ -247,7 +248,7 @@ fn handle_window_event(
 fn dump_bounds<'a>(node: &layout::LayoutBox<'a>, level: uint) {
     let spaces = String::from_char(level*2, ' ');
     let d = node.dimensions;
-    println!("{}{},{} - {},{} border: {}", spaces, d.x,d.y, d.width,d.height, d.border);
+    println!("{}{},{} - {},{} ", spaces, d.x,d.y, d.width,d.height);
     for ch in node.children.iter() {
         dump_bounds(ch, level+1);
     }
