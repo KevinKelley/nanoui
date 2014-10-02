@@ -21,7 +21,7 @@ impl<'a> Render for LayoutBox<'a> {
         nvg.save();
 
         // bogus, erase entire area of this box
-        let owned_bg = Color::rgba(224,192,224, 192);
+        let owned_bg = Color::rgba(224,192,224, 128);
         let white = css::Color(255,255,255,255);
         let background = style.lookup("background", "background", &white).to_color();
 
@@ -131,9 +131,10 @@ fn draw_text(
     // finally draw the text
     nvg.begin_path();
     nvg.fill_color(color);
-    nvg.text_box(x, y+h + 24.0, 600.0, text);
+    nvg.text_box(x, y + 24.0, 600.0, text);
 }
 
+/// return a tuple of (width,height) for given text string
 pub fn measure_text(nvg: &mut Ctx, text: &str, font: &Font, fontsize: f32) -> (f32,f32) {
     // nvg uses [xmin,ymin, xmax,ymax] for bounds;
     let mut bounds = [0.0, ..4];

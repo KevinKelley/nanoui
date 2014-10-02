@@ -105,9 +105,10 @@ impl<'a> App<'a> {
 
     /// initialize libraries, and create a main window.
     fn new<'a>() -> App<'a> {
-        // initialize glfw, and create a main-window
+        // initialize glfw
         let glfw = glfw::init(glfw::FAIL_ON_ERRORS).unwrap();
 
+        // want GL 3.2 or better; NanoVG likes VBOs and such
         glfw.window_hint(glfw::ContextVersion(3, 2));
         glfw.window_hint(glfw::OpenglForwardCompat(true));
         glfw.window_hint(glfw::OpenglProfile(glfw::OpenGlCoreProfile));
@@ -116,11 +117,13 @@ impl<'a> App<'a> {
             .expect("Failed to create GLFW window.");
 
         window.set_sticky_keys(true);
-        window.set_all_polling(true);
+        window.set_all_polling(true);  // have GLFW pass on all event types when we poll
         window.make_current();
 
         // use glfw to load GL function pointers
-        glcheck!(gl::load_with(|name| glfw.get_proc_address(name)));
+        // (does this need to happen here, after window.make_current()?
+        //  or could it be packed away somewhere)
+        glcheck!(gl::load_with(|name| window.get_proc_address(name)));
 
         App {
             glfw: glfw,
@@ -139,8 +142,8 @@ impl<'a> App<'a> {
 
         while !self.window.should_close()
         {
-            // process outstanding window events
-            self.glfw.wait_events(); // or poll_events for continuous updating
+            // process outstanding window events (wait, blocking, until there are some)
+            self.glfw.wait_events(); // or use poll_events for continuous updating
 
             // 'borrow' dance!  can't borrow self as mut (to handle events)
             // while 'self.window' is borrowed as immut (to receive them).
@@ -202,14 +205,17 @@ impl<'a> App<'a> {
 
     fn render(&mut self) {
 
-            let (win_width, win_height) = self.window.get_size();
-            let (fb_width, _fb_height) = self.window.get_framebuffer_size();
-            // Calculate pixel ration for hi-dpi devices.
-            let px_ratio = fb_width as f32 / win_width as f32;
+        let (win_width, win_height) = self.window.get_size();
+        let (fb_width, _fb_height) = self.window.get_framebuffer_size();
+        // Calculate pixel ration for hi-dpi devices.
+        let px_ratio = fb_width as f32 / win_width as f32;
 
         // TODO - have to pass '0' height to root layout,
         // or it'll position stuff below existing window
-        let containing_block = layout::Dimensions::sized(win_width as uint, 0);
+        let containing_block = layout::Dimensions::sized(
+            win_width as uint,
+            win_height as uint
+        );
 
         let style_root = style::style_tree(&self.root_node, &self.stylesheet);
         let layout_root = layout::layout_tree(&style_root, containing_block);
@@ -223,10 +229,10 @@ impl<'a> App<'a> {
 
         layout_root.render(&mut self.nvg, &font);
 
+        self.nvg.end_frame();
+
         println!(""); dump_bounds(&layout_root, 0);
         //println!(""); inspect!(layout_root);
-
-        self.nvg.end_frame();
     }
 }
 fn handle_window_event(
@@ -248,8 +254,14 @@ fn handle_window_event(
 fn dump_bounds<'a>(node: &layout::LayoutBox<'a>, level: uint) {
     let spaces = String::from_char(level*2, ' ');
     let d = node.dimensions;
-    println!("{}{},{} - {},{} ", spaces, d.x,d.y, d.width,d.height);
+    //let desc = match node.get_style_node().
+    println!("{}{},{} - {},{}  {}",
+        spaces,
+        d.x,d.y, d.width,d.height,
+        node.get_style_node().display()
+    );
     for ch in node.children.iter() {
         dump_bounds(ch, level+1);
     }
 }
+

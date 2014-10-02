@@ -158,8 +158,7 @@ fn main() {
     window.make_current();
 
     // use glfw to load GL function pointers
-    glcheck!(gl::load_with(|name| glfw.get_proc_address(name)));
-    //init_gl();
+    glcheck!(gl::load_with(|name| window.get_proc_address(name)));
 
     //glfw.set_swap_interval(0);
     glfw.set_time(0.0);

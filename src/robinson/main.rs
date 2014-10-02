@@ -49,9 +49,23 @@ fn main() {
     let layout_root = layout::layout_tree(&style_root, initial_containing_block);
 
     // Debug output:
-    //println!("{}", layout_root.dimensions);
-    inspect!(root_node); println!("");
-    inspect!(stylesheet); println!("");
-    inspect!(style_root); println!("");
-    inspect!(layout_root); println!("");
+    dump_bounds(&layout_root, 0);
+    //inspect!(root_node); println!("");
+    //inspect!(stylesheet); println!("");
+    //inspect!(style_root); println!("");
+    //inspect!(layout_root); println!("");
+}
+fn dump_bounds<'a>(node: &layout::LayoutBox<'a>, level: uint) {
+    let spaces = String::from_char(level*2, ' ');
+    let d = node.dimensions;
+    //let desc = match node.get_style_node().
+    println!("{}{},{} - {},{}  {}  dom#{}",
+        spaces,
+        d.x,d.y, d.width,d.height,
+        node.get_style_node().display(),
+        node.get_style_node().node.unwrap().uid
+    );
+    for ch in node.children.iter() {
+        dump_bounds(ch, level+1);
+    }
 }

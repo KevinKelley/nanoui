@@ -1,11 +1,14 @@
 //! Basic DOM data structures.
 
 use std::collections::hashmap::{HashMap, HashSet};
+use super::Uid;
 
 pub type AttrMap = HashMap<String, String>;
 
 #[deriving(Show)]
 pub struct Node {
+    pub uid: Uid,
+
     // data common to all nodes:
     pub children: Vec<Node>,
 
@@ -28,11 +31,12 @@ pub struct ElementData {
 // Constructor functions for convenience:
 
 pub fn text(data: String) -> Node {
-    Node { children: vec![], node_type: Text(data) }
+    Node { uid: Uid::new(), children: vec![], node_type: Text(data) }
 }
 
 pub fn elem(name: String, attrs: AttrMap, children: Vec<Node>) -> Node {
     Node {
+        uid: Uid::new(),
         children: children,
         node_type: Element(ElementData {
             tag_name: name,

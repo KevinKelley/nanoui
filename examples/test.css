@@ -1,5 +1,7 @@
 * {
   display: block;
+  border-width: 3px;
+  border-color: #000055;
 }
 
 span {
