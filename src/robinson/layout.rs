@@ -139,25 +139,86 @@ impl<'a> LayoutBox<'a> {
     /// layout an inline node and its descendants.
     /// I'm taking this to be just a mirror (horizontal replacing vertical)
     /// of the logic for block-layout
-    fn layout_inline(&mut self, containing_block: Dimensions) {
+    fn layout_inline(&mut self, mut containing_block: Dimensions) {
 
-        self.measure_content();
+        let _given_width = containing_block.width;
+        containing_block.width = 0.0;
 
-        self.layout_inline_children();
+        //self.measure_content();
+
+        self.calculate_inline_height(containing_block);
 
         self.calculate_inline_position(containing_block);
+
+
+        // either we have children: in which case lay them out, accumulating width...
+        // ...or we don't: and we're a leaf-node; in which case use intrinsic width.
+        if self.is_leaf() {
+            self.dimensions.width = 80.0;
+        }
+        else {
+            // Recursively lay out the children of this box.
+            self.layout_inline_children();
+        }
+
+        // after all that, it's possible that width is specifically set in css,
+        // so in that case, override it.
+        self.check_override_inline_width();
     }
 
-    /// ideal desired size for this block's content (if any)
-    fn measure_content(&mut self) {
-        //let style = self.get_style_node();
+//    /// ideal desired size for this block's content (if any)
+//    fn measure_content(&mut self) {
+//        //let style = self.get_style_node();
+//        let d = &mut self.dimensions;
+//
+//        //let em = Length(16.0, Px);
+//        //let em5 = Length(16.0 * 5.0, Px); // avg word length in pix
+//
+//        d.width = 80.0;  //em5.to_px();
+//        d.height = 16.0; //em.to_px();
+//    }
+
+    fn calculate_inline_height(&mut self, containing_block: Dimensions) {
+        let style = self.get_style_node();
         let d = &mut self.dimensions;
 
-        //let em = Length(16.0, Px);
-        //let em5 = Length(16.0 * 5.0, Px); // avg word length in pix
+        // margin, border, and padding have initial value 0.
+        let zero = Length(0.0, Px);
 
-        d.width = 80.0;  //em5.to_px();
-        d.height = 16.0; //em.to_px();
+        // If margin-top or margin-bottom is `auto`, the used value is zero.
+        d.margin.top = style.lookup("margin-top", "margin", &zero).to_px();
+        d.margin.bottom = style.lookup("margin-bottom", "margin", &zero).to_px();
+
+        d.border.top = style.lookup("border-top-width", "border-width", &zero).to_px();
+        d.border.bottom = style.lookup("border-bottom-width", "border-width", &zero).to_px();
+
+        d.padding.top = style.lookup("padding-top", "padding", &zero).to_px();
+        d.padding.bottom = style.lookup("padding-bottom", "padding", &zero).to_px();
+
+    }
+
+    fn calculate_inline_position(&mut self, containing_block: Dimensions) {
+        let style = self.get_style_node();
+        let d = &mut self.dimensions;
+
+        // margin, border, and padding have initial value 0.
+        let zero = Length(0.0, Px);
+
+        // If margin-left or margin-right is `auto`, the used value is zero.
+        d.margin.left = style.lookup("margin-left", "margin", &zero).to_px();
+        d.margin.right = style.lookup("margin-right", "margin", &zero).to_px();
+
+        d.border.left = style.lookup("border-left-width", "border-width", &zero).to_px();
+        d.border.right = style.lookup("border-right-width", "border-width", &zero).to_px();
+
+        d.padding.left = style.lookup("padding-left", "padding", &zero).to_px();
+        d.padding.right = style.lookup("padding-right", "padding", &zero).to_px();
+
+        // Position the box to right of all previous boxes in the container.
+        d.x = containing_block.x + containing_block.width +
+              d.margin.left + d.border.left + d.padding.left;
+        d.y = containing_block.y +
+              d.margin.top + d.border.top + d.padding.top;
     }
 
     /// Lay out the inline's children within its content area.
@@ -173,30 +234,15 @@ impl<'a> LayoutBox<'a> {
         }
     }
 
-    fn calculate_inline_position(&mut self, containing_block: Dimensions) {
-//        let style = self.get_style_node();
-        let d = &mut self.dimensions;
-
-//        // margin, border, and padding have initial value 0.
-//        let zero = Length(0.0, Px);
-//
-//        // If margin-left or margin-right is `auto`, the used value is zero.
-//        d.margin.left = style.lookup("margin-left", "margin", &zero).to_px();
-//        d.margin.right = style.lookup("margin-right", "margin", &zero).to_px();
-//
-//        d.border.left = style.lookup("border-left-width", "border-width", &zero).to_px();
-//        d.border.right = style.lookup("border-right-width", "border-width", &zero).to_px();
-//
-//        d.padding.left = style.lookup("padding-left", "padding", &zero).to_px();
-//        d.padding.right = style.lookup("padding-right", "padding", &zero).to_px();
-
-        // Position the box to right of all previous boxes in the container.
-        d.x = containing_block.x + containing_block.width +
-              d.margin.left + d.border.left + d.padding.left;
-        d.y = containing_block.y +
-              d.margin.top + d.border.top + d.padding.top;
+    /// Width of a inline-level non-replaced element in normal flow with overflow visible.
+    fn check_override_inline_width(&mut self) {
+        // If the width is set to an explicit length, use that exact length.
+        // Otherwise, just keep the value set by `layout_block_children`.
+        match self.get_style_node().value("width") {
+            Some(Length(h, Px)) => { self.dimensions.width = h; }
+            _ => {}
+        }
     }
-
 
 ////////////////////////////////////////////////////////////////////
 // block
@@ -206,7 +252,7 @@ impl<'a> LayoutBox<'a> {
     /// Lay out a block-level element and its descendants.
     fn layout_block(&mut self, mut containing_block: Dimensions) {
 
-        let given_height = containing_block.height;
+        let _given_height = containing_block.height;
         containing_block.height = 0.0;
 
         // Child width can depend on parent width, so we need to calculate this box's width before
@@ -352,7 +398,6 @@ impl<'a> LayoutBox<'a> {
     /// Sets `self.dimensions.height` to the total content height.
     fn layout_block_children(&mut self) {
         let d = &mut self.dimensions;
-        //assert!(d.height == 0.0); // testing assumptions; self-block hasn't been placed yet
         for child in self.children.mut_iter() {
             child.layout(*d);
             // Increment the height so each child is laid out below the previous one.
@@ -369,6 +414,8 @@ impl<'a> LayoutBox<'a> {
             _ => {}
         }
     }
+
+//////////////////////////////////////////////////////////////////
 
     /// Where a new inline child should go.
     fn get_inline_container(&mut self) -> &mut LayoutBox<'a> {
