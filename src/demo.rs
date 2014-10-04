@@ -9,7 +9,7 @@ extern crate nanovg;
 extern crate nanoui;
 
 use glfw::Context as GLFWContext;
-use std::gc::{Gc,GC};
+use std::rc::Rc;
 use std::cell::Cell;
 
 use nanovg::{Ctx, Image, Font, ANTIALIAS,STENCIL_STROKES};
@@ -56,22 +56,22 @@ impl Resources {
 #[deriving(Show)]
 pub struct AppData {
     // some persistent variables for demonstration
-    pub enum1:     Gc<Cell<i32>>,
-    pub progress1: Gc<Cell<f32>>,
-    pub progress2: Gc<Cell<f32>>,
-    pub option1:  Gc<Cell<bool>>,
-    pub option2:  Gc<Cell<bool>>,
-    pub option3:  Gc<Cell<bool>>,
+    pub enum1:     Rc<Cell<i32>>,
+    pub progress1: Rc<Cell<f32>>,
+    pub progress2: Rc<Cell<f32>>,
+    pub option1:  Rc<Cell<bool>>,
+    pub option2:  Rc<Cell<bool>>,
+    pub option3:  Rc<Cell<bool>>,
 }
 pub fn init_app_data() -> AppData {
     // fake load-from-storage
     AppData {
-        enum1:     box (GC) Cell::new(0),
-        progress1: box (GC) Cell::new(0.25),
-        progress2: box (GC) Cell::new(0.75),
-        option1:   box (GC) Cell::new(true),
-        option2:   box (GC) Cell::new(false),
-        option3:   box (GC) Cell::new(false),
+        enum1:     Rc::new(Cell::new(0)),
+        progress1: Rc::new(Cell::new(0.25)),
+        progress2: Rc::new(Cell::new(0.75)),
+        option1:   Rc::new(Cell::new(true)),
+        option2:   Rc::new(Cell::new(false)),
+        option3:   Rc::new(Cell::new(false)),
     }
 }
 //#[unsafe_destructor]
@@ -285,10 +285,10 @@ pub fn init(app: &mut App) {
 
     {
         let h = hgroup(ui, col);
-        radio(ui, h, 3, icon_id(6,  3), "Item 3.0", app.data.enum1);
-        radio(ui, h, 4, icon_id(0, 10), "", app.data.enum1);
-        radio(ui, h, 5, icon_id(1, 10), "", app.data.enum1);
-        radio(ui, h, 6, icon_id(6,  3), "Item 3.3", app.data.enum1);
+        radio(ui, h, 3, icon_id(6,  3), "Item 3.0", app.data.enum1.clone());
+        radio(ui, h, 4, icon_id(0, 10), "", app.data.enum1.clone());
+        radio(ui, h, 5, icon_id(1, 10), "", app.data.enum1.clone());
+        radio(ui, h, 6, icon_id(6,  3), "Item 3.3", app.data.enum1.clone());
     }
 
     {
@@ -302,15 +302,15 @@ pub fn init(app: &mut App) {
         ui.set_frozen(right, app.data.option1.get()); // make initial gui state match data
         label(ui, right, no_icon(), "Items 4.1:");
         let right_body = vgroup(ui, right);
-        slider(ui, right_body,  9, "Item 4.1.0", app.data.progress1);
-        slider(ui, right_body, 10, "Item 4.1.1", app.data.progress2);
+        slider(ui, right_body,  9, "Item 4.1.0", app.data.progress1.clone());
+        slider(ui, right_body, 10, "Item 4.1.1", app.data.progress2.clone());
     }
 
     button(ui, col, 11, icon_id(6, 3), "Item 5", None);
 
-    check(ui, col, 12, "Freeze section 4.1", app.data.option1, Some(freezehandler));
-    check(ui, col, 13, "Item 7", app.data.option2, Some(checkhandler));
-    check(ui, col, 14, "Item 8", app.data.option3, Some(checkhandler));
+    check(ui, col, 12, "Freeze section 4.1", app.data.option1.clone(), Some(freezehandler));
+    check(ui, col, 13, "Item 7", app.data.option2.clone(), Some(checkhandler));
+    check(ui, col, 14, "Item 8", app.data.option3.clone(), Some(checkhandler));
 
     // structure is built, append-handlers have run (so edge-grabbers are set);
     // now complete the layout

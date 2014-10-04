@@ -24,6 +24,7 @@ pub mod oui;
 pub mod widget;
 pub mod morph;
 pub mod robinson;
+pub mod ecs;
 
 pub type Point = geom::Point<f32>;
 pub type Rect = geom::Rect<f32>;

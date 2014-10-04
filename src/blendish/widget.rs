@@ -1,5 +1,5 @@
 
-use std::gc::Gc;
+use std::rc::Rc;
 use std::cell::Cell;  // shared refs to ui-updatable data
 
 pub use {
@@ -17,9 +17,9 @@ use oui::*;
 pub enum Widget {
     Label { iconid:i32, text:String },
     Button { iconid:i32, text:String },
-    Check { text:String, option: Gc<Cell<bool>> },
-    Radio { iconid:i32, text:String, index: Gc<Cell<i32>> },
-    Slider { text:String, progress: Gc<Cell<f32>> },
+    Check { text:String, option: Rc<Cell<bool>> },
+    Radio { iconid:i32, text:String, index: Rc<Cell<i32>> },
+    Slider { text:String, progress: Rc<Cell<f32>> },
     Row { pub unused:i8 /*compiler doesn't support empty struct variants*/},
     Column { pub unused:i8 },
     Panel { unused:i8 }
@@ -60,13 +60,13 @@ pub fn draw_ui(ui: &mut Context<Widget>, vg: &mut ThemedContext, item: Item, x: 
                 cornerflags, item_state,
                 iconid as u32, label.as_slice());
         }
-        Check { text:ref label, option:option } => {
+        Check { text:ref label, option:ref option } => {
             let state =
                 if option.get() { ACTIVE }
                 else { item_state };
             vg.draw_option_button(x, y, w, h, state, label.as_slice());
         }
-        Radio { iconid:iconid, text:ref label, index:index } => {
+        Radio { iconid:iconid, text:ref label, index:ref index } => {
             let state =
                 if (*index).get() == kidid { ACTIVE }
                 else { item_state };
@@ -74,7 +74,7 @@ pub fn draw_ui(ui: &mut Context<Widget>, vg: &mut ThemedContext, item: Item, x: 
                 cornerflags, state,
                 iconid as u32, label.as_slice());
         }
-        Slider { text:ref label, progress:progress } => {
+        Slider { text:ref label, progress:ref progress } => {
             let val = progress.get();
             let val_str = format!("{}", val*100.0);
             vg.draw_slider(x, y, w, h,
@@ -126,7 +126,7 @@ pub fn button(ui:&mut Context<Widget>, parent: Item, tag: Tag, iconid: i32, labe
 }
 
 pub fn check(ui:&mut Context<Widget>, parent: Item, tag: Tag, label: &str,
-    option: Gc<Cell<bool>>, handler: Handler<Widget>)
+    option: Rc<Cell<bool>>, handler: Handler<Widget>)
 -> Item
 {
     let chk = Check { text:label.to_string(), option:option };
@@ -139,7 +139,7 @@ pub fn check(ui:&mut Context<Widget>, parent: Item, tag: Tag, label: &str,
 }
 
 pub fn slider(ui:&mut Context<Widget>, parent: Item, tag: Tag, label: &str,
-    progress: Gc<Cell<f32>>)
+    progress: Rc<Cell<f32>>)
 -> Item
 {
     let sli = Slider { text:label.to_string(), progress:progress };
@@ -153,7 +153,7 @@ pub fn slider(ui:&mut Context<Widget>, parent: Item, tag: Tag, label: &str,
 }
 
 pub fn radio(ui:&mut Context<Widget>, parent: Item, tag: Tag, iconid: i32, label: &str,
-    index: Gc<Cell<i32>>)
+    index: Rc<Cell<i32>>)
 -> Item
 {
     let rad = Radio { iconid:iconid, text:label.to_string(), index:index };
@@ -222,9 +222,9 @@ pub fn checkhandler(ui: &mut Context<Widget>, item: Item, _event: EventFlags) {
     let tag = ui.get_tag(item);
     let widget = ui.get_widget(item);
     match *widget {
-        Check { text: ref mut label, option: option } => {
+        Check { text: ref mut label, option: ref option } => {
             println!("clicked: #{} '{}'", tag, label);
-            let cell: Gc<Cell<bool>> = option;
+            let ref cell: Rc<Cell<bool>> = *option;
             cell.set(!cell.get());
         }
         _ => {}
@@ -247,7 +247,7 @@ pub fn freezehandler(ui: &mut Context<Widget>, item:Item, event:EventFlags) {
     let friz = {
         let widget = ui.get_widget(item);
         match *widget {
-            Check { text:_, option: option } => {
+            Check { text:_, option: ref option } => {
                 option.get()
             }
             _ => { false }
@@ -263,9 +263,9 @@ pub fn radiohandler(ui: &mut Context<Widget>, item: Item, _event: EventFlags) {
     let kidid = ui.get_child_id(item);
     let widget = ui.get_widget(item);
     match *widget {
-        Radio { iconid:_, text: ref mut label, index: index } => {
+        Radio { iconid:_, text: ref mut label, index: ref mut index } => {
             println!("clicked: #{} '{}'", tag, label);
-            let cell: Gc<Cell<i32>> = index;
+            let ref mut cell: Rc<Cell<i32>> = *index;
             cell.set(kidid);
         }
         _ => {}
@@ -286,7 +286,7 @@ pub fn sliderhandler(ui: &mut Context<Widget>, item: Item, event: EventFlags) {
         BUTTON0_DOWN => {
             println!("button0 down");
             match *widget {
-                Slider { text:_, progress: currval } => {
+                Slider { text:_, progress: ref currval } => {
                     unsafe { sliderstart = currval.get() };
                 }
                 _ => {}
@@ -297,7 +297,7 @@ pub fn sliderhandler(ui: &mut Context<Widget>, item: Item, event: EventFlags) {
             let val = unsafe { sliderstart + (pos.x as f32 / rc.w as f32) };
             let val = clamp(val, 0.0, 1.0);
             match *widget {
-                Slider { text:_, progress: currval } => {
+                Slider { text:_, progress: ref currval } => {
                     currval.set(val);
                 }
                 _ => {}
